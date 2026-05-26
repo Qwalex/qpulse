@@ -16,6 +16,19 @@ _(пусто)_
 
 ## Done (recent)
 
+## [TASK-013] Railway: починить API deploy
+- **Status:** done
+- **Assignee:** agent
+- **Priority:** P1
+- **Scope:** apps/api/Dockerfile, docs/runbooks/deploy-railway.md
+- **Description:** API на Railway падал: неверный путь к prisma + CRLF в entrypoint.
+- **Acceptance criteria:**
+  - [x] Dockerfile копирует `apps/api/node_modules`, `docker-entrypoint.sh`
+  - [x] `qpulse-api` Online, health + home-content + login OK
+  - [x] Миграции + seed (RUN_SEED снова false)
+- **Notes:** `railway up` с локального кода; закоммитьте Dockerfile в GitHub для CI deploy.
+- **Updated:** 2026-05-26
+
 ## [TASK-001] Scaffold monorepo
 - **Status:** done
 - **Assignee:** agent
@@ -180,4 +193,4 @@ _(пусто)_
 
 ## Task ID counter
 
-Next ID: **TASK-013**
+Next ID: **TASK-014**

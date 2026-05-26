@@ -29,12 +29,16 @@ COPY --from=build /app/packages/shared ./packages/shared
 COPY --from=build /app/apps/api/package.json ./apps/api/package.json
 COPY --from=build /app/apps/api/dist ./apps/api/dist
 COPY --from=build /app/apps/api/prisma ./apps/api/prisma
+COPY --from=build /app/apps/api/node_modules ./apps/api/node_modules
 
 WORKDIR /app/apps/api
+
+COPY apps/api/docker-entrypoint.sh ./docker-entrypoint.sh
+RUN sed -i 's/\r$//' ./docker-entrypoint.sh && chmod +x ./docker-entrypoint.sh
 
 EXPOSE 3001
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=90s --retries=3 \
   CMD wget -qO- "http://127.0.0.1:${PORT:-3001}/health" || exit 1
 
-CMD ["sh", "-c", "/app/node_modules/.bin/prisma migrate deploy && if [ \"$RUN_SEED\" = \"true\" ]; then /app/node_modules/.bin/prisma db seed; fi && exec node dist/main.js"]
+ENTRYPOINT ["sh", "./docker-entrypoint.sh"]

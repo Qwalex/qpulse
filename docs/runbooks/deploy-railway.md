@@ -187,5 +187,6 @@ docker run --rm -p 3000:3000 qpulse-admin
 | `prisma migrate` failed | Проверить `DATABASE_URL` (internal URL Railway Postgres) |
 | WS not connecting | `wss://` + тот же домен что API |
 | Health check failed | Подождать 60s (start-period); проверить Postgres + Redis |
+| `prisma: not found` при старте | В `apps/api/Dockerfile` копируется `apps/api/node_modules`; entrypoint — `sh docker-entrypoint.sh` (CRLF strip в образе) |
 
 See also: [local-dev-troubleshooting.md](local-dev-troubleshooting.md)
