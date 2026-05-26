@@ -16,6 +16,7 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install
+      - run: pnpm --filter @qpulse/api prisma:generate
       - run: pnpm --filter @qpulse/shared build
       - run: pnpm typecheck
       - run: pnpm lint
