@@ -13,11 +13,11 @@ COPY packages/shared ./packages/shared
 COPY apps/api ./apps/api
 RUN pnpm --filter @qpulse/shared build
 WORKDIR /app/apps/api
-RUN npx prisma generate
+RUN npx prisma@6.19.3 generate
 RUN pnpm build
 
 FROM node:24-alpine AS runner
-RUN apk add --no-cache openssl
+RUN apk add --no-cache openssl wget python3 make g++
 RUN corepack enable && corepack prepare pnpm@9.15.0 --activate
 WORKDIR /app
 
@@ -29,14 +29,12 @@ COPY --from=build /app/packages/shared ./packages/shared
 COPY --from=build /app/apps/api/package.json ./apps/api/package.json
 COPY --from=build /app/apps/api/dist ./apps/api/dist
 COPY --from=build /app/apps/api/prisma ./apps/api/prisma
-COPY --from=build /app/apps/api/docker-entrypoint.sh ./apps/api/docker-entrypoint.sh
 
 WORKDIR /app/apps/api
-RUN chmod +x docker-entrypoint.sh
 
 EXPOSE 3001
 
-HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=5s --start-period=90s --retries=3 \
   CMD wget -qO- "http://127.0.0.1:${PORT:-3001}/health" || exit 1
 
-ENTRYPOINT ["./docker-entrypoint.sh"]
+CMD ["sh", "-c", "/app/node_modules/.bin/prisma migrate deploy && if [ \"$RUN_SEED\" = \"true\" ]; then /app/node_modules/.bin/prisma db seed; fi && exec node dist/main.js"]
