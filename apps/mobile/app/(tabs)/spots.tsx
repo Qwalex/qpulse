@@ -1,0 +1,211 @@
+import {
+
+  ActivityIndicator,
+
+  FlatList,
+
+  Pressable,
+
+  RefreshControl,
+
+  StyleSheet,
+
+  Text,
+
+  View,
+
+} from 'react-native';
+
+import { useQuery } from '@tanstack/react-query';
+
+import { Link } from 'expo-router';
+
+import { MarketType } from '@qpulse/shared';
+
+import { fetchSignals, fetchSettings } from '@/lib/api';
+
+import { SignalCard } from '@/components/SignalCard';
+
+import { RiskBanner } from '@/components/RiskBanner';
+
+import { TelegramFab } from '@/components/TelegramFab';
+
+import { QueryErrorView } from '@/components/QueryErrorView';
+
+import { useAppStore } from '@/store/useAppStore';
+
+import { spacing } from '@/constants/theme';
+
+
+
+export default function SpotsScreen() {
+
+  const themeColors = useAppStore((s) => s.colors);
+
+
+
+  const signalsQuery = useQuery({
+
+    queryKey: ['signals', MarketType.SPOT, 'live'],
+
+    queryFn: () => fetchSignals(MarketType.SPOT, 'live'),
+
+  });
+
+
+
+  const settingsQuery = useQuery({
+
+    queryKey: ['settings'],
+
+    queryFn: fetchSettings,
+
+  });
+
+
+
+  const signals = signalsQuery.data ?? [];
+
+
+
+  if (signalsQuery.isLoading) {
+
+    return (
+
+      <View style={[styles.center, { backgroundColor: themeColors.background }]}>
+
+        <ActivityIndicator color={themeColors.accent} size="large" />
+
+      </View>
+
+    );
+
+  }
+
+
+
+  if (signalsQuery.isError) {
+
+    return <QueryErrorView onRetry={() => signalsQuery.refetch()} />;
+
+  }
+
+
+
+  return (
+
+    <View style={[styles.container, { backgroundColor: themeColors.background }]}>
+
+      <View style={styles.header}>
+
+        <Text style={[styles.title, { color: themeColors.text }]}>Spots ({signals.length})</Text>
+
+        <Link href={{ pathname: '/results', params: { marketType: 'spot' } }} asChild>
+
+          <Pressable style={[styles.resultsBtn, { backgroundColor: themeColors.accent }]}>
+
+            <Text style={styles.resultsText}>Results</Text>
+
+          </Pressable>
+
+        </Link>
+
+      </View>
+
+      <FlatList
+
+        data={signals}
+
+        keyExtractor={(item) => item.id}
+
+        refreshControl={
+
+          <RefreshControl
+
+            refreshing={signalsQuery.isRefetching}
+
+            onRefresh={() => signalsQuery.refetch()}
+
+            tintColor={themeColors.accent}
+
+          />
+
+        }
+
+        ListHeaderComponent={
+
+          <RiskBanner disclaimer={settingsQuery.data?.disclaimer ?? ''} />
+
+        }
+
+        renderItem={({ item }) => <SignalCard signal={item} />}
+
+        contentContainerStyle={styles.listContent}
+
+        ListEmptyComponent={
+
+          <Text style={[styles.empty, { color: themeColors.textMuted }]}>Нет активных сигналов</Text>
+
+        }
+
+      />
+
+      <TelegramFab url={settingsQuery.data?.telegramFabUrl} />
+
+    </View>
+
+  );
+
+}
+
+
+
+const styles = StyleSheet.create({
+
+  container: { flex: 1 },
+
+  center: {
+
+    flex: 1,
+
+    alignItems: 'center',
+
+    justifyContent: 'center',
+
+  },
+
+  header: {
+
+    flexDirection: 'row',
+
+    justifyContent: 'space-between',
+
+    alignItems: 'center',
+
+    paddingHorizontal: spacing.md,
+
+    paddingTop: spacing.md,
+
+  },
+
+  title: { fontSize: 20, fontWeight: '700' },
+
+  resultsBtn: {
+
+    paddingHorizontal: spacing.md,
+
+    paddingVertical: spacing.xs,
+
+    borderRadius: 8,
+
+  },
+
+  resultsText: { color: '#fff', fontWeight: '600' },
+
+  listContent: { padding: spacing.md, paddingBottom: 100 },
+
+  empty: { textAlign: 'center', marginVertical: spacing.md },
+
+});
+
+

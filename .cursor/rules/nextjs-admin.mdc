@@ -1,0 +1,36 @@
+---
+description: Next.js admin — auth, TanStack Query, forms, shared types
+globs: apps/admin/**
+alwaysApply: false
+---
+
+# Next.js Admin
+
+## Auth
+
+- Access token in React memory (not localStorage)
+- Refresh via httpOnly cookie + `credentials: 'include'`
+- Attach `Authorization: Bearer` on admin API calls
+
+## Data
+
+- `@tanstack/react-query` for all server state
+- `NEXT_PUBLIC_API_URL` + `lib/api.ts` wrapper
+- DTOs from `@qpulse/shared`
+
+## Forms
+
+- react-hook-form + zod
+- Signal form: validate `closeDate` when CLOSED, `liquidated` only when CLOSED
+
+## Pages
+
+/login, /dashboard, /signals, /results-summary, /menu-links, /reviews, /home-content, /settings, /notifications
+
+## UI
+
+Dark Tailwind, desktop-first. Simple tables/forms OK without shadcn.
+
+## After API changes
+
+Update page if new admin endpoint added. Sync `docs/contracts/rest-api.md`.

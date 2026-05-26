@@ -1,0 +1,193 @@
+export enum MarketType {
+  SPOT = 'SPOT',
+  FUTURES = 'FUTURES',
+}
+
+export enum Direction {
+  LONG = 'LONG',
+  SHORT = 'SHORT',
+}
+
+export enum SignalStatus {
+  OPEN = 'OPEN',
+  ACTIVE = 'ACTIVE',
+  CLOSED = 'CLOSED',
+  CANCELLED = 'CANCELLED',
+}
+
+export enum ResultsTimeframe {
+  ONE_W = 'ONE_W',
+  ONE_M = 'ONE_M',
+  THREE_M = 'THREE_M',
+  SIX_M = 'SIX_M',
+  ONE_Y = 'ONE_Y',
+}
+
+export enum SignalEventType {
+  SIGNAL_CREATED = 'SIGNAL_CREATED',
+  SIGNAL_UPDATED = 'SIGNAL_UPDATED',
+  TP_HIT = 'TP_HIT',
+  SL_HIT = 'SL_HIT',
+  LIQUIDATED = 'LIQUIDATED',
+  SIGNAL_CLOSED = 'SIGNAL_CLOSED',
+  SIGNAL_CANCELLED = 'SIGNAL_CANCELLED',
+}
+
+export enum MenuActionType {
+  EXTERNAL_LINK = 'EXTERNAL_LINK',
+  INTERNAL_ROUTE = 'INTERNAL_ROUTE',
+}
+
+export const TIMEFRAME_API_MAP: Record<string, ResultsTimeframe> = {
+  '1W': ResultsTimeframe.ONE_W,
+  '1M': ResultsTimeframe.ONE_M,
+  '3M': ResultsTimeframe.THREE_M,
+  '6M': ResultsTimeframe.SIX_M,
+  '1Y': ResultsTimeframe.ONE_Y,
+};
+
+export const TIMEFRAME_DAYS: Record<ResultsTimeframe, number> = {
+  [ResultsTimeframe.ONE_W]: 7,
+  [ResultsTimeframe.ONE_M]: 30,
+  [ResultsTimeframe.THREE_M]: 90,
+  [ResultsTimeframe.SIX_M]: 180,
+  [ResultsTimeframe.ONE_Y]: 365,
+};
+
+export interface SignalTarget {
+  label: string;
+  price: number;
+  profitPercent: number;
+}
+
+export interface SignalDetails {
+  targets: SignalTarget[];
+  stopLoss?: number;
+}
+
+export interface SignalDto {
+  id: string;
+  pair: string;
+  marketType: MarketType;
+  direction?: Direction | null;
+  action?: string | null;
+  entryPrice: number;
+  capitalPercentage: number;
+  leverage?: number | null;
+  openDate: string;
+  closeDate?: string | null;
+  status: SignalStatus;
+  currentTpLevel?: number | null;
+  slHit: boolean;
+  liquidated: boolean;
+  targetHitLabel?: string | null;
+  profitPercentage?: number | null;
+  logoUrl?: string | null;
+  details?: SignalDetails | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ResultsSummaryDto {
+  totalTrades: number;
+  winTrades: number;
+  lossTrades: number;
+  winRate: number;
+  totalProfit: number;
+}
+
+export interface ResultsResponse {
+  summary: ResultsSummaryDto;
+  signals: SignalDto[];
+}
+
+export interface HomeContentDto {
+  btcPrice: number;
+  btcChange24h: number;
+  btcMarketCap: string;
+  btcVolume: string;
+  fearGreedValue: number;
+  fearGreedLabel: string;
+  ticker: Array<{ pair: string; price: number; change: number }>;
+  socialLinks: Array<{ id: string; label: string; url: string; icon: string }>;
+}
+
+export interface AppSettingsDto {
+  disclaimer: string;
+  telegramFabUrl?: string | null;
+}
+
+export interface MenuLinkDto {
+  id: string;
+  label: string;
+  icon: string;
+  actionType: MenuActionType;
+  url?: string | null;
+  route?: string | null;
+  order: number;
+  isEnabled: boolean;
+}
+
+export interface ReviewCreateDto {
+  rating: number;
+  comment?: string;
+  deviceId?: string;
+}
+
+export interface DeviceRegisterDto {
+  pushToken: string;
+  platform: string;
+  deviceId?: string;
+}
+
+export interface WsSubscribeMessage {
+  type: 'subscribe';
+  channels: string[];
+}
+
+export interface WsSignalCreated {
+  type: 'signal:created';
+  payload: SignalDto;
+}
+
+export interface WsSignalUpdated {
+  type: 'signal:updated';
+  payload: SignalDto;
+}
+
+export interface WsSignalDeleted {
+  type: 'signal:deleted';
+  payload: { signalId: string };
+}
+
+export interface WsSignalEvent {
+  type: 'signal:event';
+  payload: {
+    eventType: SignalEventType;
+    signalId: string;
+    tpLevel?: number;
+    [key: string]: unknown;
+  };
+}
+
+export type WsServerMessage =
+  | WsSignalCreated
+  | WsSignalUpdated
+  | WsSignalDeleted
+  | WsSignalEvent;
+
+export interface PushJobPayload {
+  eventType: SignalEventType;
+  signalId: string;
+  payload: Record<string, unknown>;
+}
+
+export interface AdminUserDto {
+  id: string;
+  email: string;
+}
+
+export interface AuthLoginResponse {
+  accessToken: string;
+  user: AdminUserDto;
+}

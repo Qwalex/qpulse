@@ -1,0 +1,42 @@
+---
+description: QPulse monorepo map, stack versions, forbidden patterns
+alwaysApply: true
+---
+
+# QPulse Core
+
+## Monorepo map
+
+- `apps/mobile` — Expo SDK 55, expo-router
+- `apps/api` — NestJS 11, Prisma, WS, BullMQ
+- `apps/admin` — Next.js 16, Tailwind v4
+- `packages/shared` — DTOs, enums, WS payloads (**source of truth**)
+
+## Stack (stable/LTS only)
+
+- Node 24.16.0, PostgreSQL 18, Redis 7
+- No beta deps (NestJS 12, Expo SDK 56, etc.)
+
+## Forbidden
+
+- External market APIs (CoinGecko, Alternative.me)
+- Mock JSON files in Phase 1 — use Prisma + seed
+- Duplicating types outside `packages/shared`
+- Hardcoding menu items in mobile — use `MenuLink`
+- Push token via WebSocket — only `POST /devices/register`
+- Showing CANCELLED signals in mobile
+
+## Signal rules
+
+- Statuses: OPEN, ACTIVE, CLOSED, CANCELLED
+- `liquidated` only when CLOSED; forces `slHit=false`
+- Results: closed signals by `closeDate` + timeframe window
+- Admin CRUD only path for signal management
+
+## Before coding
+
+Read `tasks.md`, `AGENTS.md`, relevant `docs/contracts/*`.
+
+## When done
+
+Update `tasks.md`, docs if contracts changed, run `pnpm lint && pnpm typecheck`.

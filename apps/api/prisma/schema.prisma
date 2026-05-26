@@ -1,0 +1,174 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum MarketType {
+  SPOT
+  FUTURES
+}
+
+enum Direction {
+  LONG
+  SHORT
+}
+
+enum SignalStatus {
+  OPEN
+  ACTIVE
+  CLOSED
+  CANCELLED
+}
+
+enum ResultsTimeframe {
+  ONE_W
+  ONE_M
+  THREE_M
+  SIX_M
+  ONE_Y
+}
+
+enum SignalEventType {
+  SIGNAL_CREATED
+  SIGNAL_UPDATED
+  TP_HIT
+  SL_HIT
+  LIQUIDATED
+  SIGNAL_CLOSED
+  SIGNAL_CANCELLED
+}
+
+enum MenuActionType {
+  EXTERNAL_LINK
+  INTERNAL_ROUTE
+}
+
+model Signal {
+  id                String       @id @default(uuid())
+  pair              String
+  marketType        MarketType
+  direction         Direction?
+  action            String?
+  entryPrice        Decimal
+  capitalPercentage Float
+  leverage          Int?
+  openDate          DateTime
+  closeDate         DateTime?
+  status            SignalStatus
+  currentTpLevel    Int?
+  slHit             Boolean      @default(false)
+  liquidated        Boolean      @default(false)
+  targetHitLabel    String?
+  profitPercentage  Float?
+  logoUrl           String?
+  details           Json?
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  events            SignalEventLog[]
+}
+
+model ResultsSummary {
+  marketType  MarketType
+  timeframe   ResultsTimeframe
+  totalTrades Int
+  winTrades   Int
+  lossTrades  Int
+  winRate     Float
+  totalProfit Float
+  updatedAt   DateTime         @updatedAt
+
+  @@id([marketType, timeframe])
+}
+
+model SignalEventLog {
+  id        String          @id @default(uuid())
+  signalId  String
+  signal    Signal          @relation(fields: [signalId], references: [id], onDelete: Cascade)
+  eventType SignalEventType
+  payload   Json?
+  createdAt DateTime        @default(now())
+}
+
+model DeviceToken {
+  id        String   @id @default(uuid())
+  pushToken String   @unique
+  platform  String
+  deviceId  String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model NotificationLog {
+  id        String          @id @default(uuid())
+  deviceId  String?
+  eventType SignalEventType
+  title     String
+  body      String
+  status    String
+  error     String?
+  createdAt DateTime        @default(now())
+}
+
+model NotificationTemplate {
+  eventType SignalEventType @id
+  titleTpl  String
+  bodyTpl   String
+  channel   String
+  priority  String
+  deepLink  String
+}
+
+model HomeContent {
+  id             String   @id @default("default")
+  btcPrice       Decimal
+  btcChange24h   Float
+  btcMarketCap   String
+  btcVolume      String
+  fearGreedValue Int
+  fearGreedLabel String
+  ticker         Json
+  socialLinks    Json
+  updatedAt      DateTime @updatedAt
+}
+
+model MenuLink {
+  id         String         @id
+  label      String
+  icon       String
+  actionType MenuActionType
+  url        String?
+  route      String?
+  order      Int
+  isEnabled  Boolean        @default(true)
+  updatedAt  DateTime       @updatedAt
+}
+
+model Review {
+  id        String   @id @default(uuid())
+  rating    Int
+  comment   String?
+  deviceId  String?
+  createdAt DateTime @default(now())
+
+  @@index([deviceId, createdAt])
+}
+
+model AppSettings {
+  id             String   @id @default("default")
+  disclaimer     String
+  telegramFabUrl String?
+  updatedAt      DateTime @updatedAt
+}
+
+model AdminUser {
+  id               String   @id @default(uuid())
+  email            String   @unique
+  passwordHash     String
+  refreshTokenHash String?
+  createdAt        DateTime @default(now())
+}

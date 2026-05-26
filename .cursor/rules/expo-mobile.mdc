@@ -1,0 +1,41 @@
+---
+description: Expo mobile — expo-router, WS hook, dynamic menu, no hardcode
+globs: apps/mobile/**
+alwaysApply: false
+---
+
+# Expo Mobile
+
+## Routing
+
+Tabs: `(tabs)/index`, `more`, `spots`, `futures`. Stack: `/results`, `/rate-review`.
+
+## Data fetching
+
+- `@tanstack/react-query` for REST
+- `EXPO_PUBLIC_API_URL` base
+- `useSignalRealtime` → invalidate queries on WS events
+
+## Components
+
+- `SignalCard` — Spots/Futures live (OPEN/ACTIVE) only
+- `ClosedSignalCard` — Results only
+- Never show CANCELLED signals
+
+## Menu
+
+Render from `GET /settings/menu`. No hardcoded menu list.
+- `EXTERNAL_LINK` → `Linking.openURL`
+- `INTERNAL_ROUTE` → `router.push`
+
+## Push
+
+Register via `POST /devices/register` only. Not via WebSocket.
+
+## Theme
+
+Dark-first: bg `#0A0A0F`, cards `#1E1E24`, accent `#3B82F6`.
+
+## Types
+
+Import from `@qpulse/shared`. Never duplicate DTOs locally.

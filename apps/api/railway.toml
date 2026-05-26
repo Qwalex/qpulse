@@ -1,0 +1,14 @@
+# Railway config for qpulse-api
+# Dashboard: Service → Settings → Root Directory = / (repo root)
+#            Config file path = apps/api/railway.toml
+
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "apps/api/Dockerfile"
+watchPatterns = ["apps/api/**", "packages/shared/**"]
+
+[deploy]
+healthcheckPath = "/health"
+healthcheckTimeout = 300
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10

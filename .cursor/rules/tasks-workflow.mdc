@@ -1,0 +1,43 @@
+---
+description: Mandatory tasks.md workflow for all agents
+alwaysApply: true
+---
+
+# Tasks Workflow
+
+## Start every session
+
+1. Read `tasks.md`
+2. Claim highest-priority `pending` or resume `in_progress`
+3. Set `Status: in_progress`, `Assignee`, `Updated: <date>`
+
+## While working
+
+- Follow `AGENTS.md` + `.cursor/rules/`
+- If blocked → `Status: blocked` + describe in Notes
+- New scope discovered → add TASK-NNN (increment counter)
+
+## When done
+
+- `Status: done`, check acceptance criteria
+- Notes: brief summary of what changed
+- Update docs if contracts changed
+
+## Format
+
+```markdown
+## [TASK-NNN] Title
+- **Status:** pending | in_progress | blocked | done | cancelled
+- **Assignee:** agent-name / unassigned
+- **Priority:** P0 | P1 | P2
+- **Scope:** paths affected
+- **Acceptance criteria:** checkboxes
+- **Notes:** progress log
+- **Updated:** YYYY-MM-DD
+```
+
+## Do not
+
+- Start coding without checking tasks.md
+- Leave tasks in_progress without Notes when switching context
+- Forget to increment "Next ID" when adding tasks

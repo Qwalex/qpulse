@@ -1,0 +1,31 @@
+---
+description: Shared package — export-only types, breaking change policy
+globs: packages/shared/**
+alwaysApply: false
+---
+
+# Shared Package
+
+## Role
+
+Single source of truth for enums, DTOs, WS payloads, `PushJobPayload`.
+
+Consumed by: `apps/api`, `apps/admin`, `apps/mobile` as `@qpulse/shared`.
+
+## Rules
+
+- Export from `src/index.ts` only
+- No runtime logic except constants (`TIMEFRAME_API_MAP`, `TIMEFRAME_DAYS`)
+- No imports from apps (no circular deps)
+- Enums must match Prisma schema values exactly
+
+## Breaking changes
+
+1. Update enum/DTO here first
+2. Update Prisma if needed
+3. Update all consumers
+4. Update `docs/contracts/shared-types.md`
+
+## Adding types
+
+Mirror API response shapes. Use optional `?` for nullable Prisma fields.

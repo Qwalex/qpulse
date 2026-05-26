@@ -1,0 +1,15 @@
+**/node_modules
+**/.next
+**/dist
+**/.turbo
+**/*.tsbuildinfo
+.git
+.github
+.cursor
+docs
+apps/mobile
+**/.env
+**/.env.*
+!**/.env.example
+**/*.md
+**/agent-transcripts

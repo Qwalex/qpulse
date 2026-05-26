@@ -1,0 +1,37 @@
+---
+description: Contract-first development — shared types and docs sync
+alwaysApply: true
+---
+
+# Contracts
+
+## Source of truth
+
+| Layer | Location |
+|-------|----------|
+| TypeScript types | `packages/shared/src/index.ts` |
+| Database | `apps/api/prisma/schema.prisma` |
+| REST | `docs/contracts/rest-api.md` |
+| WebSocket | `docs/contracts/websocket.md` |
+| Push | `docs/contracts/push-events.md` |
+
+## Workflow
+
+**Contract → code → docs** (never code-first without updating contracts)
+
+1. Change `packages/shared` and/or `schema.prisma`
+2. Implement in api/admin/mobile
+3. Update matching `docs/contracts/*.md` in same PR
+
+## Breaking changes
+
+- New optional field — non-breaking
+- Rename/remove enum or DTO field — update shared + all apps + docs together
+
+## Query param convention
+
+Public API: lowercase (`marketType=spot`, `timeframe=3M`). Map to Prisma enums in api services.
+
+## Swagger
+
+`/api/docs` supplements `rest-api.md`; does not replace it.

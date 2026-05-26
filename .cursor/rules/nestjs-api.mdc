@@ -1,0 +1,47 @@
+---
+description: NestJS API conventions — modules, events, BullMQ, Prisma
+globs: apps/api/**
+alwaysApply: false
+---
+
+# NestJS API
+
+## Module layout
+
+One domain per folder: `signals/`, `results/`, `events/`, `realtime/`, `notifications/`, `queue/`.
+
+## Signal updates
+
+After Prisma persist, call `SignalEventService`:
+- create → `handleCreate`
+- update → `handleUpdate(before, after)`
+- delete → `handleDelete` (WS only, no push)
+
+One dominant `SignalEventType` per update (priority in `signal-event.service.ts`).
+
+## Realtime
+
+- Gateway path: `/api/v1/realtime`
+- Channels: `signals:spot`, `signals:futures`, `signals:all`
+- Always broadcast `signal:updated`; optional `signal:event`
+- Redis pub/sub channel: `qpulse:ws`
+
+## BullMQ
+
+- Queue: `push-notifications`
+- Enqueue from SignalEventService — never block admin HTTP response
+- Retry: 3× exponential backoff
+
+## Validation
+
+- `closeDate` required when `status=CLOSED`
+- `liquidated=true` only when CLOSED; set `slHit=false`
+- Map entities via `common/mappers/signal.mapper.ts`
+
+## Auth
+
+`JwtAuthGuard` on all `/admin/*` except login/refresh. Refresh in httpOnly cookie.
+
+## Types
+
+Import DTOs from `@qpulse/shared`. Prisma enums from `@prisma/client`.
