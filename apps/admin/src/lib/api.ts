@@ -1,5 +1,8 @@
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001/api/v1';
 
+/** Same-origin proxy on admin — refresh cookie is first-party in the browser. */
+const AUTH_API_BASE = typeof window !== 'undefined' ? '/api/v1' : API_BASE;
+
 let accessToken: string | null = null;
 
 export function setAccessToken(token: string | null) {
@@ -43,7 +46,7 @@ async function parseResponse<T>(res: Response): Promise<T> {
 
 async function refreshAccessToken(): Promise<string | null> {
   try {
-    const res = await fetch(`${API_BASE}/admin/auth/refresh`, {
+    const res = await fetch(`${AUTH_API_BASE}/admin/auth/refresh`, {
       method: 'POST',
       credentials: 'include',
     });
@@ -88,28 +91,48 @@ export async function apiFetch<T>(path: string, options: ApiFetchOptions = {}): 
   return parseResponse<T>(res);
 }
 
+type AuthFetchOptions = RequestInit & { withAccessToken?: boolean };
+
+async function authFetch<T>(path: string, options: AuthFetchOptions = {}): Promise<T> {
+  const { withAccessToken, headers: initHeaders, ...rest } = options;
+  const headers = new Headers(initHeaders);
+  if (withAccessToken && accessToken) {
+    headers.set('Authorization', `Bearer ${accessToken}`);
+  }
+  if (rest.body && !headers.has('Content-Type')) {
+    headers.set('Content-Type', 'application/json');
+  }
+  const res = await fetch(`${AUTH_API_BASE}${path}`, {
+    ...rest,
+    credentials: 'include',
+    headers,
+  });
+  return parseResponse<T>(res);
+}
+
 export const api = {
   login: (email: string, password: string) =>
-    apiFetch<{ accessToken: string; user: { id: string; email: string } }>(
+    authFetch<{ accessToken: string; user: { id: string; email: string } }>(
       '/admin/auth/login',
       {
         method: 'POST',
         body: JSON.stringify({ email, password }),
-        skipAuth: true,
-        skipRefresh: true,
       },
     ),
 
   logout: () =>
-    apiFetch<{ ok: boolean }>('/admin/auth/logout', { method: 'POST' }),
+    authFetch<{ ok: boolean }>('/admin/auth/logout', {
+      method: 'POST',
+      withAccessToken: true,
+    }),
 
   me: () =>
-    apiFetch<{ id: string; email: string }>('/admin/auth/me'),
+    authFetch<{ id: string; email: string }>('/admin/auth/me', { withAccessToken: true }),
 
   refresh: () =>
-    apiFetch<{ accessToken: string; user: { id: string; email: string } }>(
+    authFetch<{ accessToken: string; user: { id: string; email: string } }>(
       '/admin/auth/refresh',
-      { method: 'POST', skipAuth: true, skipRefresh: true },
+      { method: 'POST' },
     ),
 
   dashboard: () =>

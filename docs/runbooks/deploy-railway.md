@@ -181,7 +181,8 @@ docker run --rm -p 3000:3000 qpulse-admin
 
 | Issue | Fix |
 |-------|-----|
-| Admin login 401 on refresh | `ADMIN_URL` на API = точный URL admin; cookies `SameSite=None` + `Secure` |
+| Admin login 401 on refresh | `ADMIN_URL` на API = точный URL admin; admin auth через same-origin proxy `/api/v1/admin/auth/*` |
+| Refresh 500 без cookie | Перелогиниться; API возвращает 401 если cookie нет (не 500) |
 | CORS error | API `ADMIN_URL` без `/` в конце; redeploy API |
 | Build admin с localhost API | Задать `NEXT_PUBLIC_API_URL` **до** build, redeploy |
 | `prisma migrate` failed | Проверить `DATABASE_URL` (internal URL Railway Postgres) |

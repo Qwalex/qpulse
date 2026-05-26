@@ -30,7 +30,10 @@ export class AuthService {
     };
   }
 
-  async refresh(refreshToken: string) {
+  async refresh(refreshToken: string | undefined) {
+    if (!refreshToken) {
+      throw new UnauthorizedException('Refresh token missing');
+    }
     const hash = createHash('sha256').update(refreshToken).digest('hex');
     const user = await this.prisma.adminUser.findFirst({ where: { refreshTokenHash: hash } });
     if (!user) throw new UnauthorizedException('Invalid refresh token');

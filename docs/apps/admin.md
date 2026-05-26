@@ -46,9 +46,9 @@ origin: [process.env.ADMIN_URL],
 credentials: true,
 ```
 
-Refresh cookie: `httpOnly`, `Secure`, `SameSite=None`.
+Refresh cookie: `httpOnly`, `Secure`, `SameSite=Lax` on admin origin.
 
-Optional dev proxy: `app/api/auth/[...path]/route.ts`.
+Production: auth requests go through same-origin proxy `src/app/api/v1/admin/auth/[...path]/route.ts` (cookie first-party; upstream API still validates).
 
 ## lib/api.ts
 
