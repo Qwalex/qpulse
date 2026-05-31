@@ -11,6 +11,8 @@ import type {
   ResultsResponse,
 
   ReviewCreateDto,
+  ReviewDto,
+  ReviewMineResponse,
 
   SignalDto,
 
@@ -176,16 +178,16 @@ export function fetchMenuLinks(): Promise<MenuLinkDto[]> {
 
 
 
-export function submitReview(data: ReviewCreateDto): Promise<{ id: string }> {
+export function fetchMyReview(deviceId: string): Promise<ReviewMineResponse> {
+  const q = new URLSearchParams({ deviceId });
+  return request<ReviewMineResponse>(`/reviews/mine?${q.toString()}`);
+}
 
-  return request<{ id: string }>('/reviews', {
-
+export function submitReview(data: ReviewCreateDto): Promise<ReviewDto> {
+  return request<ReviewDto>('/reviews', {
     method: 'POST',
-
     body: JSON.stringify(data),
-
   });
-
 }
 
 

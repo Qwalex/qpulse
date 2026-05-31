@@ -9,13 +9,12 @@ import { Alert, Button, Card, Input, Label, PageHeader, Spinner, Textarea } from
 import { useEffect, useState } from 'react';
 
 const homeSchema = z.object({
-  btcPrice: z.coerce.number(),
-  btcChange24h: z.coerce.number(),
-  btcMarketCap: z.string(),
-  btcVolume: z.string(),
-  fearGreedValue: z.coerce.number().int(),
+  totalMarketCap: z.string(),
+  totalMarketCapChange24h: z.coerce.number(),
+  altcoinSeasonIndex: z.coerce.number().int().min(0).max(100),
+  altcoinSeasonLabel: z.string(),
+  fearGreedValue: z.coerce.number().int().min(0).max(100),
   fearGreedLabel: z.string(),
-  tickerJson: z.string(),
   socialLinksJson: z.string(),
 });
 
@@ -38,35 +37,31 @@ export default function HomeContentPage() {
   useEffect(() => {
     if (!data) return;
     reset({
-      btcPrice: data.btcPrice,
-      btcChange24h: data.btcChange24h,
-      btcMarketCap: data.btcMarketCap,
-      btcVolume: data.btcVolume,
+      totalMarketCap: data.totalMarketCap,
+      totalMarketCapChange24h: data.totalMarketCapChange24h,
+      altcoinSeasonIndex: data.altcoinSeasonIndex,
+      altcoinSeasonLabel: data.altcoinSeasonLabel,
       fearGreedValue: data.fearGreedValue,
       fearGreedLabel: data.fearGreedLabel,
-      tickerJson: JSON.stringify(data.ticker, null, 2),
       socialLinksJson: JSON.stringify(data.socialLinks, null, 2),
     });
   }, [data, reset]);
 
   const mutation = useMutation({
     mutationFn: (values: HomeForm) => {
-      let ticker: unknown;
       let socialLinks: unknown;
       try {
-        ticker = JSON.parse(values.tickerJson);
         socialLinks = JSON.parse(values.socialLinksJson);
       } catch {
-        throw new Error('Invalid JSON in ticker or social links');
+        throw new Error('Invalid JSON in social links');
       }
       return api.homeContent.update({
-        btcPrice: values.btcPrice,
-        btcChange24h: values.btcChange24h,
-        btcMarketCap: values.btcMarketCap,
-        btcVolume: values.btcVolume,
+        totalMarketCap: values.totalMarketCap,
+        totalMarketCapChange24h: values.totalMarketCapChange24h,
+        altcoinSeasonIndex: values.altcoinSeasonIndex,
+        altcoinSeasonLabel: values.altcoinSeasonLabel,
         fearGreedValue: values.fearGreedValue,
         fearGreedLabel: values.fearGreedLabel,
-        ticker,
         socialLinks,
       });
     },
@@ -85,7 +80,10 @@ export default function HomeContentPage() {
 
   return (
     <div>
-      <PageHeader title="Home content" description="BTC stats, ticker and social links" />
+      <PageHeader
+        title="Home content"
+        description="Market metrics, fear & greed index, and social links for the mobile dashboard"
+      />
 
       <Card>
         <form
@@ -93,32 +91,28 @@ export default function HomeContentPage() {
           className="grid gap-4 md:grid-cols-2"
         >
           <div>
-            <Label>BTC price</Label>
-            <Input type="number" step="any" {...register('btcPrice')} />
+            <Label>Total market cap</Label>
+            <Input {...register('totalMarketCap')} placeholder="$2.84T" />
           </div>
           <div>
-            <Label>BTC change 24h</Label>
-            <Input type="number" step="any" {...register('btcChange24h')} />
+            <Label>Market cap change 24h (%)</Label>
+            <Input type="number" step="any" {...register('totalMarketCapChange24h')} />
           </div>
           <div>
-            <Label>Market cap</Label>
-            <Input {...register('btcMarketCap')} />
+            <Label>Altcoin Season index (0–100)</Label>
+            <Input type="number" {...register('altcoinSeasonIndex')} />
           </div>
           <div>
-            <Label>Volume</Label>
-            <Input {...register('btcVolume')} />
+            <Label>Altcoin Season label</Label>
+            <Input {...register('altcoinSeasonLabel')} placeholder="Bitcoin Season" />
           </div>
           <div>
-            <Label>Fear & Greed value</Label>
+            <Label>Fear & Greed value (0–100)</Label>
             <Input type="number" {...register('fearGreedValue')} />
           </div>
           <div>
             <Label>Fear & Greed label</Label>
-            <Input {...register('fearGreedLabel')} />
-          </div>
-          <div className="md:col-span-2">
-            <Label>Ticker (JSON array)</Label>
-            <Textarea rows={6} className="font-mono text-xs" {...register('tickerJson')} />
+            <Input {...register('fearGreedLabel')} placeholder="Greed" />
           </div>
           <div className="md:col-span-2">
             <Label>Social links (JSON array)</Label>

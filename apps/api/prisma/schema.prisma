@@ -49,6 +49,9 @@ enum MenuActionType {
 
 model Signal {
   id                String       @id @default(uuid())
+  /// Id сигнала во внешней системе (signalsBot Signal.id).
+  externalId        String?      @unique
+  source            String?
   pair              String
   marketType        MarketType
   direction         Direction?
@@ -124,16 +127,15 @@ model NotificationTemplate {
 }
 
 model HomeContent {
-  id             String   @id @default("default")
-  btcPrice       Decimal
-  btcChange24h   Float
-  btcMarketCap   String
-  btcVolume      String
-  fearGreedValue Int
-  fearGreedLabel String
-  ticker         Json
-  socialLinks    Json
-  updatedAt      DateTime @updatedAt
+  id                      String   @id @default("default")
+  totalMarketCap          String
+  totalMarketCapChange24h Float
+  altcoinSeasonIndex      Int
+  altcoinSeasonLabel      String
+  fearGreedValue          Int
+  fearGreedLabel          String
+  socialLinks             Json
+  updatedAt               DateTime @updatedAt
 }
 
 model MenuLink {
@@ -152,10 +154,9 @@ model Review {
   id        String   @id @default(uuid())
   rating    Int
   comment   String?
-  deviceId  String?
+  deviceId  String?  @unique
   createdAt DateTime @default(now())
-
-  @@index([deviceId, createdAt])
+  updatedAt DateTime @updatedAt
 }
 
 model AppSettings {

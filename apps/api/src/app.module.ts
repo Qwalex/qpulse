@@ -34,6 +34,8 @@ import { AdminModule } from './admin/admin.module';
 
 import { HealthModule } from './health/health.module';
 
+import { IntegrationsModule } from './integrations/integrations.module';
+
 
 
 @Module({
@@ -77,6 +79,8 @@ import { HealthModule } from './health/health.module';
     DevicesModule,
 
     AdminModule,
+
+    IntegrationsModule,
 
     HealthModule,
 

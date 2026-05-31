@@ -3,7 +3,8 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import type { MenuLinkDto } from '@qpulse/shared';
 import { MenuActionType } from '@qpulse/shared';
-import { colors, radii, spacing } from '@/constants/theme';
+import { radii, spacing } from '@/constants/theme';
+import { useAppStore } from '@/store/useAppStore';
 
 interface SettingsMenuListProps {
   items: MenuLinkDto[];
@@ -23,6 +24,7 @@ function resolveIcon(icon: string): keyof typeof Ionicons.glyphMap {
 
 export function SettingsMenuList({ items }: SettingsMenuListProps) {
   const router = useRouter();
+  const themeColors = useAppStore((s) => s.colors);
 
   const handlePress = (item: MenuLinkDto) => {
     if (item.actionType === MenuActionType.EXTERNAL_LINK && item.url) {
@@ -35,19 +37,28 @@ export function SettingsMenuList({ items }: SettingsMenuListProps) {
   };
 
   return (
-    <View style={styles.list}>
-      {items.map((item) => (
+    <View
+      style={[
+        styles.list,
+        { backgroundColor: themeColors.card, borderColor: themeColors.cardBorder },
+      ]}
+    >
+      {items.map((item, index) => (
         <Pressable
           key={item.id}
-          style={styles.row}
+          style={[
+            styles.row,
+            { borderBottomColor: themeColors.cardBorder },
+            index === items.length - 1 && styles.rowLast,
+          ]}
           onPress={() => handlePress(item)}
           accessibilityRole="button"
         >
-          <View style={styles.iconWrap}>
-            <Ionicons name={resolveIcon(item.icon)} size={20} color={colors.accent} />
+          <View style={[styles.iconWrap, { backgroundColor: themeColors.accent + '22' }]}>
+            <Ionicons name={resolveIcon(item.icon)} size={20} color={themeColors.accent} />
           </View>
-          <Text style={styles.label}>{item.label}</Text>
-          <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+          <Text style={[styles.label, { color: themeColors.text }]}>{item.label}</Text>
+          <Ionicons name="chevron-forward" size={18} color={themeColors.textMuted} />
         </Pressable>
       ))}
     </View>
@@ -56,31 +67,29 @@ export function SettingsMenuList({ items }: SettingsMenuListProps) {
 
 const styles = StyleSheet.create({
   list: {
-    backgroundColor: colors.card,
     borderRadius: radii.md,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: colors.cardBorder,
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: colors.cardBorder,
+  },
+  rowLast: {
+    borderBottomWidth: 0,
   },
   iconWrap: {
     width: 36,
     height: 36,
     borderRadius: radii.sm,
-    backgroundColor: colors.accent + '22',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: spacing.sm,
   },
   label: {
     flex: 1,
-    color: colors.text,
     fontSize: 16,
   },
 });

@@ -102,12 +102,12 @@ Singleton (`id = "default"`). All Home screen data from admin.
 
 | Field | Type |
 |-------|------|
-| btcPrice | Decimal |
-| btcChange24h | Float |
-| btcMarketCap, btcVolume | String |
-| fearGreedValue | Int |
+| totalMarketCap | String |
+| totalMarketCapChange24h | Float |
+| altcoinSeasonIndex | Int (0–100) |
+| altcoinSeasonLabel | String |
+| fearGreedValue | Int (0–100) |
 | fearGreedLabel | String |
-| ticker | Json |
 | socialLinks | Json |
 
 ### MenuLink
@@ -166,7 +166,7 @@ Signal 1──* SignalEventLog
 - Signals: OPEN, ACTIVE, CLOSED (incl. liquidated), CANCELLED
 - ResultsSummary: 10 rows (5 timeframes × 2 markets)
 - MenuLink: 8 items (Instagram disabled)
-- HomeContent: default BTC stats + ticker
+- HomeContent: default market metrics + social links
 - NotificationTemplate: all SignalEventTypes
 - AdminUser: single admin account
 - AppSettings: disclaimer + telegramFabUrl

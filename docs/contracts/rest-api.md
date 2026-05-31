@@ -16,13 +16,12 @@ GET /home-content
 
 ```json
 {
-  "btcPrice": 67500.5,
-  "btcChange24h": 2.3,
-  "btcMarketCap": "$1.3T",
-  "btcVolume": "$45B",
+  "totalMarketCap": "$2.84T",
+  "totalMarketCapChange24h": 1.8,
+  "altcoinSeasonIndex": 38,
+  "altcoinSeasonLabel": "Bitcoin Season",
   "fearGreedValue": 72,
   "fearGreedLabel": "Greed",
-  "ticker": [{ "pair": "ETH/USDT", "price": 3200, "change": 1.5 }],
   "socialLinks": [{ "id": "telegram", "label": "Telegram", "url": "https://t.me/...", "icon": "telegram" }]
 }
 ```
@@ -84,16 +83,21 @@ GET /settings/menu
 ### Reviews
 
 ```
+GET /reviews/mine?deviceId=<device-id>
 POST /reviews
 ```
 
-**Body:** `ReviewCreateDto`
+**GET response:** `ReviewMineResponse` — `{ "review": ReviewDto | null }`
+
+**POST body:** `ReviewCreateDto`
 
 ```json
-{ "rating": 5, "comment": "Great signals!", "deviceId": "optional-uuid" }
+{ "rating": 5, "comment": "Great signals!", "deviceId": "dev_..." }
 ```
 
-Rate limit: 1 review / deviceId / 24h.
+**POST response:** `ReviewDto` — создаёт или обновляет отзыв для `deviceId` (один отзыв на устройство).
+
+Mobile stores `ReviewDto` locally (AsyncStorage) and hides "Rate app", showing "Edit review" instead.
 
 ### Devices (push tokens)
 
@@ -115,6 +119,57 @@ DELETE /devices/unregister
 ```
 
 > Единственный способ регистрации push token. WS не используется для tokens.
+
+---
+
+## Integration endpoints (signalsBot / external)
+
+Auth: header `X-API-Key` = env `INTEGRATIONS_API_KEY` on API service.
+
+```
+POST   /integrations/signals
+PATCH  /integrations/signals/:externalId
+```
+
+### POST /integrations/signals
+
+Upsert by `externalId`: if signal with this `externalId` already exists, returns existing row (idempotent).
+
+**Body:**
+
+```json
+{
+  "externalId": "clx_signalsbot_id",
+  "source": "Binance Killers",
+  "pair": "BTC / USDT",
+  "marketType": "FUTURES",
+  "direction": "LONG",
+  "entryPrice": 65000,
+  "capitalPercentage": 2,
+  "leverage": 5,
+  "status": "OPEN",
+  "openDate": "2026-05-31T10:00:00Z",
+  "details": {
+    "targets": [
+      { "label": "Target 01", "price": 65500, "profitPercent": 0.8, "hit": false }
+    ],
+    "stopLoss": 63000
+  }
+}
+```
+
+**Response:** `SignalDto` (201 semantics via upsert — existing returns 200).
+
+### PATCH /integrations/signals/:externalId
+
+Partial update; same execution fields as admin PATCH. Triggers `SignalEventService` (WS + push).
+
+**Errors:**
+
+| Code | When |
+|------|------|
+| 401 | Missing/invalid `X-API-Key` |
+| 404 | Unknown `externalId` |
 
 ---
 

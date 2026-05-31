@@ -20,15 +20,15 @@ export function SummaryStatsCard({ summary }: SummaryStatsCardProps) {
 
   return (
     <View style={styles.card}>
-      <Text style={styles.title}>Статистика</Text>
+      <Text style={styles.title}>Statistics</Text>
       <View style={styles.grid}>
-        <StatItem label="Сделок" value={String(summary.totalTrades)} />
+        <StatItem label="Trades" value={String(summary.totalTrades)} />
         <StatItem label="Win Rate" value={`${summary.winRate.toFixed(1)}%`} accent={colors.accent} />
         <StatItem label="Wins" value={String(summary.winTrades)} accent={colors.success} />
         <StatItem label="Losses" value={String(summary.lossTrades)} accent={colors.danger} />
       </View>
       <View style={styles.totalRow}>
-        <Text style={styles.totalLabel}>Общая прибыль</Text>
+        <Text style={styles.totalLabel}>Total profit</Text>
         <Text style={[styles.totalValue, { color: profitColor }]}>
           {summary.totalProfit >= 0 ? '+' : ''}
           {summary.totalProfit.toFixed(2)}%

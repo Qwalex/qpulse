@@ -20,7 +20,7 @@
 
 | Tab | Route | Screen |
 |-----|-------|--------|
-| Home | `index` | BTC stats, Fear & Greed, ticker, social links |
+| Home | `index` | Market metrics, Fear & Greed, results summary, social links |
 | More | `more` | Settings menu, dark mode toggle |
 | Spots | `spots` | Live SPOT signals (OPEN + ACTIVE) |
 | Futures | `futures` | Live FUTURES signals |

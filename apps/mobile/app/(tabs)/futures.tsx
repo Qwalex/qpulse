@@ -26,8 +26,6 @@ import { fetchSignals, fetchSettings } from '@/lib/api';
 
 import { SignalCard } from '@/components/SignalCard';
 
-import { RiskBanner } from '@/components/RiskBanner';
-
 import { TelegramFab } from '@/components/TelegramFab';
 
 import { QueryErrorView } from '@/components/QueryErrorView';
@@ -132,19 +130,13 @@ export default function FuturesScreen() {
 
         }
 
-        ListHeaderComponent={
-
-          <RiskBanner disclaimer={settingsQuery.data?.disclaimer ?? ''} />
-
-        }
-
         renderItem={({ item }) => <SignalCard signal={item} />}
 
         contentContainerStyle={styles.listContent}
 
         ListEmptyComponent={
 
-          <Text style={[styles.empty, { color: themeColors.textMuted }]}>Нет активных сигналов</Text>
+          <Text style={[styles.empty, { color: themeColors.textMuted }]}>No active signals</Text>
 
         }
 

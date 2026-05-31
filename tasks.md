@@ -16,6 +16,102 @@ _(пусто)_
 
 ## Done (recent)
 
+## [TASK-020] Mobile dashboard: market metrics + results summary
+- **Status:** done
+- **Assignee:** agent
+- **Priority:** P1
+- **Scope:** packages/shared, apps/api/prisma, apps/api/home-content, apps/admin/home-content, apps/mobile dashboard
+- **Description:** Убрать Ticker; показать market cap, Altcoin Season, Fear & Greed, краткую сводку Results. Данные из PostgreSQL/admin (не внешние API).
+- **Acceptance criteria:**
+  - [x] Ticker удалён с dashboard и из HomeContentDto/schema
+  - [x] Market cap + Altcoin Season + Fear & Greed в card UI (light/dark)
+  - [x] Краткая сводка Results + кнопка Results
+  - [x] Admin редактирует новые поля; seed с demo-значениями
+  - [x] Контракты обновлены; typecheck mobile OK
+- **Notes:** Пользователь просил public API — по правилам Phase 1 данные admin-managed через HomeContent. Миграция `20260527120000_home_content_market_metrics`. Новые компоненты: MarketMetricsSection, DashboardResultsSummary.
+- **Updated:** 2026-05-27
+
+## [TASK-019] Mobile: hide tab screen headers
+- **Status:** done
+- **Assignee:** agent
+- **Priority:** P1
+- **Scope:** apps/mobile/app/(tabs)/_layout.tsx
+- **Description:** Скрыть верхние заголовки Home, Spots, Futures, More — активная вкладка в bottom bar достаточна.
+- **Acceptance criteria:**
+  - [x] headerShown: false для tab screens
+  - [x] Stack headers (Results, Rate app) не затронуты
+  - [x] typecheck mobile OK
+- **Notes:** `headerShown: false` в Tabs screenOptions; убраны неиспользуемые headerStyle/headerTintColor. Stack в app/_layout.tsx без изменений.
+- **Updated:** 2026-05-27
+
+## [TASK-017] Translate user-facing Russian UI to English
+- **Status:** done
+- **Assignee:** agent
+- **Priority:** P1
+- **Scope:** apps/mobile, apps/admin, docs/contracts (UI copy refs)
+- **Acceptance criteria:**
+  - [x] All user-facing Cyrillic strings in apps translated to English
+  - [x] Date locale en-US where applicable
+  - [x] lint/typecheck mobile + admin OK
+  - [x] Grep confirms no remaining Cyrillic in UI files
+- **Notes:** Translated mobile (Results, review flow, stats, errors, empty states), admin signal-form TP/SL labels, date locale en-US; updated rest-api.md + shared-types.md UI refs.
+- **Updated:** 2026-05-27
+
+## [TASK-018] Mobile: risk warning только на dashboard
+- **Status:** done
+- **Assignee:** agent
+- **Priority:** P1
+- **Scope:** apps/mobile (RiskBanner, more/spots/futures tabs)
+- **Description:** Текст предупреждения о рисках показывать только на dashboard (home tab).
+- **Acceptance criteria:**
+  - [x] RiskBanner только на `(tabs)/index.tsx`
+  - [x] Убран с More, Spots, Futures
+  - [x] Стилизация light/dark на dashboard OK
+  - [x] typecheck mobile OK
+- **Notes:** RiskBanner переведён на `useAppStore().colors`; settingsQuery убран из More.
+- **Updated:** 2026-05-27
+
+## [TASK-016] Mobile: light theme styling fixes
+- **Status:** done
+- **Assignee:** agent
+- **Priority:** P1
+- **Scope:** apps/mobile (theme tokens, SignalCard, SettingsMenuList, ClosedSignalCard, home Results button)
+- **Description:** Карточки, ссылки в More и кнопка «Результаты» используют dark-only цвета в light theme.
+- **Acceptance criteria:**
+  - [x] Signal cards используют themeColors из store
+  - [x] SettingsMenuList (More) использует themeColors
+  - [x] Кнопка «Результаты» на dashboard — корректный контраст
+  - [x] lint/typecheck mobile OK
+- **Notes:** Добавлен `textOnAccent`; SignalCard, ClosedSignalCard, SettingsMenuList переведены на `useAppStore().colors`.
+- **Updated:** 2026-05-27
+
+## [TASK-015] Отзыв: сохранение на устройстве и редактирование
+- **Status:** done
+- **Assignee:** agent
+- **Priority:** P1
+- **Scope:** packages/shared, apps/api, apps/mobile, docs/contracts, prisma migration
+- **Description:** После отправки отзыва пункт меню меняется; AsyncStorage + GET /reviews/mine; upsert по deviceId.
+- **Acceptance criteria:**
+  - [x] GET /reviews/mine + upsert POST по deviceId
+  - [x] Mobile: локальное состояние, «Изменить отзыв», экран редактирования
+  - [x] Контракты обновлены
+- **Notes:** Миграция `20260526120000_review_device_unique`.
+- **Updated:** 2026-05-26
+
+## [TASK-014] Контроль достижения TP / SL
+- **Status:** done
+- **Assignee:** agent
+- **Priority:** P1
+- **Scope:** packages/shared, apps/api, apps/admin, apps/mobile, docs/contracts
+- **Description:** У каждого target и stop loss признак «достигнут»; админка и mobile отображают состояние.
+- **Acceptance criteria:**
+  - [x] `SignalTarget.hit` в shared + контрактах
+  - [x] Админка: UI для targets/SL с чекбоксами hit
+  - [x] API синхронизирует currentTpLevel/targetHitLabel; TP_HIT при новом hit
+  - [x] Mobile показывает достигнутые/не достигнутые TP и SL
+- **Notes:** `slHit` для SL; `hit` на каждом target в details.
+- **Updated:** 2026-05-26
+
 ## [TASK-013] Railway: починить API deploy
 - **Status:** done
 - **Assignee:** agent
@@ -193,4 +289,4 @@ _(пусто)_
 
 ## Task ID counter
 
-Next ID: **TASK-014**
+Next ID: **TASK-021**

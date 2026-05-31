@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { Signal, SignalEventType, SignalStatus } from '@prisma/client';
-import { SignalEventType as SharedEventType } from '@qpulse/shared';
+import { hasNewTargetHit, normalizeSignalDetails, SignalEventType as SharedEventType } from '@qpulse/shared';
 import { PrismaService } from '../prisma/prisma.service';
 import { RealtimeGateway } from '../realtime/realtime.gateway';
 import { mapSignal } from '../common/mappers/signal.mapper';
@@ -95,11 +95,13 @@ export class SignalEventService {
     if (before && before.status !== after.status && after.status === SignalStatus.CLOSED) {
       candidates.push(SignalEventType.SIGNAL_CLOSED);
     }
-    if (
-      before &&
-      (before.currentTpLevel ?? 0) < (after.currentTpLevel ?? 0)
-    ) {
-      candidates.push(SignalEventType.TP_HIT);
+    if (before) {
+      const beforeDetails = normalizeSignalDetails(before.details);
+      const afterDetails = normalizeSignalDetails(after.details);
+      const tpLevelIncreased = (before.currentTpLevel ?? 0) < (after.currentTpLevel ?? 0);
+      if (tpLevelIncreased || hasNewTargetHit(beforeDetails, afterDetails)) {
+        candidates.push(SignalEventType.TP_HIT);
+      }
     }
     if (isCreate) {
       candidates.push(SignalEventType.SIGNAL_CREATED);

@@ -9,13 +9,12 @@ export class HomeContentService {
     const content = await this.prisma.homeContent.findUnique({ where: { id: 'default' } });
     if (!content) throw new NotFoundException('Home content not found');
     return {
-      btcPrice: Number(content.btcPrice),
-      btcChange24h: content.btcChange24h,
-      btcMarketCap: content.btcMarketCap,
-      btcVolume: content.btcVolume,
+      totalMarketCap: content.totalMarketCap,
+      totalMarketCapChange24h: content.totalMarketCapChange24h,
+      altcoinSeasonIndex: content.altcoinSeasonIndex,
+      altcoinSeasonLabel: content.altcoinSeasonLabel,
       fearGreedValue: content.fearGreedValue,
       fearGreedLabel: content.fearGreedLabel,
-      ticker: content.ticker,
       socialLinks: content.socialLinks,
     };
   }

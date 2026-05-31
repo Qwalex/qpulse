@@ -58,6 +58,8 @@ export interface SignalTarget {
   label: string;
   price: number;
   profitPercent: number;
+  /** Whether this take-profit level was reached. */
+  hit?: boolean;
 }
 
 export interface SignalDetails {
@@ -67,6 +69,8 @@ export interface SignalDetails {
 
 export interface SignalDto {
   id: string;
+  externalId?: string | null;
+  source?: string | null;
   pair: string;
   marketType: MarketType;
   direction?: Direction | null;
@@ -102,13 +106,12 @@ export interface ResultsResponse {
 }
 
 export interface HomeContentDto {
-  btcPrice: number;
-  btcChange24h: number;
-  btcMarketCap: string;
-  btcVolume: string;
+  totalMarketCap: string;
+  totalMarketCapChange24h: number;
+  altcoinSeasonIndex: number;
+  altcoinSeasonLabel: string;
   fearGreedValue: number;
   fearGreedLabel: string;
-  ticker: Array<{ pair: string; price: number; change: number }>;
   socialLinks: Array<{ id: string; label: string; url: string; icon: string }>;
 }
 
@@ -132,6 +135,19 @@ export interface ReviewCreateDto {
   rating: number;
   comment?: string;
   deviceId?: string;
+}
+
+export interface ReviewDto {
+  id: string;
+  rating: number;
+  comment: string | null;
+  deviceId: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ReviewMineResponse {
+  review: ReviewDto | null;
 }
 
 export interface DeviceRegisterDto {
@@ -191,3 +207,12 @@ export interface AuthLoginResponse {
   accessToken: string;
   user: AdminUserDto;
 }
+
+export {
+  normalizeSignalTarget,
+  normalizeSignalDetails,
+  deriveExecutionFields,
+  countTargetHits,
+  hasNewTargetHit,
+} from './signal-details';
+export type { SignalDetailsShape, SignalTargetShape } from './signal-details';

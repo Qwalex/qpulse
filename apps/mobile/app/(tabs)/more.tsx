@@ -1,12 +1,11 @@
+import { useMemo } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
-
 import { useQuery } from '@tanstack/react-query';
-
 import { Link } from 'expo-router';
-
-import { fetchMenuLinks, fetchSettings } from '@/lib/api';
-
-import { RiskBanner } from '@/components/RiskBanner';
+import type { MenuLinkDto } from '@qpulse/shared';
+import { MenuActionType } from '@qpulse/shared';
+import { fetchMenuLinks } from '@/lib/api';
+import { useDeviceReview } from '@/hooks/useDeviceReview';
 
 import { SettingsMenuList } from '@/components/SettingsMenuList';
 
@@ -25,24 +24,13 @@ export default function MoreScreen() {
   const isDarkMode = useAppStore((s) => s.isDarkMode);
 
   const toggleDarkMode = useAppStore((s) => s.toggleDarkMode);
-
-
+  const { ready: reviewReady, hasReview } = useDeviceReview();
 
   const menuQuery = useQuery({
 
     queryKey: ['menu'],
 
     queryFn: fetchMenuLinks,
-
-  });
-
-
-
-  const settingsQuery = useQuery({
-
-    queryKey: ['settings'],
-
-    queryFn: fetchSettings,
 
   });
 
@@ -72,17 +60,25 @@ export default function MoreScreen() {
 
 
 
-  const menuItems = menuQuery.data ?? [];
-
-
+  const menuItems = useMemo((): MenuLinkDto[] => {
+    const items = menuQuery.data ?? [];
+    return items.flatMap((item) => {
+      if (item.id !== 'rate_review') return [item];
+      if (!reviewReady || !hasReview) return [item];
+      return [
+        {
+          ...item,
+          label: 'Edit review',
+          route: '/rate-review',
+          actionType: MenuActionType.INTERNAL_ROUTE,
+        },
+      ];
+    });
+  }, [menuQuery.data, reviewReady, hasReview]);
 
   return (
 
     <ScrollView style={[styles.container, { backgroundColor: themeColors.background }]} contentContainerStyle={styles.content}>
-
-      <RiskBanner disclaimer={settingsQuery.data?.disclaimer ?? ''} />
-
-
 
       <View style={[styles.darkModeRow, { backgroundColor: themeColors.card, borderColor: themeColors.cardBorder }]}>
 
@@ -116,21 +112,29 @@ export default function MoreScreen() {
 
             <Pressable style={[styles.fallbackLink, { backgroundColor: themeColors.card, borderColor: themeColors.cardBorder }]}>
 
-              <Text style={[styles.fallbackText, { color: themeColors.text }]}>Результаты</Text>
+              <Text style={[styles.fallbackText, { color: themeColors.text }]}>Results</Text>
 
             </Pressable>
 
           </Link>
 
-          <Link href="/rate-review" asChild>
-
-            <Pressable style={[styles.fallbackLink, { backgroundColor: themeColors.card, borderColor: themeColors.cardBorder }]}>
-
-              <Text style={[styles.fallbackText, { color: themeColors.text }]}>Оценить приложение</Text>
-
-            </Pressable>
-
-          </Link>
+          {!hasReview ? (
+            <Link href="/rate-review" asChild>
+              <Pressable
+                style={[styles.fallbackLink, { backgroundColor: themeColors.card, borderColor: themeColors.cardBorder }]}
+              >
+                <Text style={[styles.fallbackText, { color: themeColors.text }]}>Rate app</Text>
+              </Pressable>
+            </Link>
+          ) : (
+            <Link href="/rate-review" asChild>
+              <Pressable
+                style={[styles.fallbackLink, { backgroundColor: themeColors.card, borderColor: themeColors.cardBorder }]}
+              >
+                <Text style={[styles.fallbackText, { color: themeColors.text }]}>Edit review</Text>
+              </Pressable>
+            </Link>
+          )}
 
         </View>
 

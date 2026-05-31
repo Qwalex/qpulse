@@ -1,18 +1,29 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, radii, spacing } from '@/constants/theme';
+import { radii, spacing } from '@/constants/theme';
+import { useAppStore } from '@/store/useAppStore';
 
 interface RiskBannerProps {
   disclaimer: string;
 }
 
 export function RiskBanner({ disclaimer }: RiskBannerProps) {
+  const themeColors = useAppStore((s) => s.colors);
+
   if (!disclaimer) return null;
 
   return (
-    <View style={styles.banner}>
-      <Ionicons name="warning-outline" size={18} color={colors.warning} />
-      <Text style={styles.text}>{disclaimer}</Text>
+    <View
+      style={[
+        styles.banner,
+        {
+          backgroundColor: themeColors.warning + '18',
+          borderColor: themeColors.warning + '44',
+        },
+      ]}
+    >
+      <Ionicons name="warning-outline" size={18} color={themeColors.warning} />
+      <Text style={[styles.text, { color: themeColors.textSecondary }]}>{disclaimer}</Text>
     </View>
   );
 }
@@ -22,16 +33,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: spacing.sm,
-    backgroundColor: colors.warning + '18',
     borderRadius: radii.md,
     padding: spacing.md,
     marginBottom: spacing.md,
     borderWidth: 1,
-    borderColor: colors.warning + '44',
   },
   text: {
     flex: 1,
-    color: colors.textSecondary,
     fontSize: 12,
     lineHeight: 18,
   },

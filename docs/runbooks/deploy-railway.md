@@ -43,11 +43,14 @@
 DATABASE_URL=${{Postgres.DATABASE_URL}}
 REDIS_URL=${{Redis.REDIS_URL}}
 JWT_SECRET=<openssl rand -hex 32>
+INTEGRATIONS_API_KEY=<openssl rand -hex 32>
 ADMIN_URL=https://<admin-domain>.up.railway.app
 NODE_ENV=production
 EXPO_ACCESS_TOKEN=<optional>
 RUN_SEED=true
 ```
+
+> `INTEGRATIONS_API_KEY` — ключ для `POST/PATCH /api/v1/integrations/signals` из signalsBot (`X-API-Key`). Тот же ключ задаётся в UI signalsBot «Моя группа» → QPulse (per cabinet: `QPULSE_API_KEY`).
 
 > `RUN_SEED=true` — **только первый деплой** (создаёт admin@qpulse.app / admin123). После успешного seed удалите переменную.
 

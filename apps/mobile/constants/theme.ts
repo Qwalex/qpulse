@@ -12,6 +12,8 @@ export const darkColors = {
 
   text: '#FFFFFF',
 
+  textOnAccent: '#FFFFFF',
+
   textSecondary: '#9CA3AF',
 
   textMuted: '#6B7280',
@@ -43,6 +45,8 @@ export const lightColors = {
   accentMuted: '#1D4ED8',
 
   text: '#111827',
+
+  textOnAccent: '#FFFFFF',
 
   textSecondary: '#4B5563',
 

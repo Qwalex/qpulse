@@ -93,6 +93,7 @@ interface SignalTarget {
   label: string;
   price: number;
   profitPercent: number;
+  hit?: boolean; // true = TP level reached
 }
 
 interface SignalDetails {
@@ -100,6 +101,10 @@ interface SignalDetails {
   stopLoss?: number;
 }
 ```
+
+- Per-target `hit` is stored in `details.targets[]`.
+- Stop loss reached is `SignalDto.slHit` (admin: "SL reached" when `stopLoss` price is set).
+- API derives `currentTpLevel` / `targetHitLabel` from the last hit target on save.
 
 ### SignalDto
 
@@ -124,7 +129,7 @@ interface ResultsResponse {
 
 ### HomeContentDto
 
-BTC stats, fear & greed, ticker array, socialLinks array.
+Market metrics (total cap, altcoin season, fear & greed), socialLinks array. Admin-managed; no external market API in Phase 1.
 
 ### AppSettingsDto
 
@@ -159,6 +164,25 @@ interface ReviewCreateDto {
   deviceId?: string;
 }
 ```
+
+### ReviewDto / ReviewMineResponse
+
+```typescript
+interface ReviewDto {
+  id: string;
+  rating: number;
+  comment: string | null;
+  deviceId: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface ReviewMineResponse {
+  review: ReviewDto | null;
+}
+```
+
+`POST /reviews` with `deviceId` upserts one review per device.
 
 ### DeviceRegisterDto
 

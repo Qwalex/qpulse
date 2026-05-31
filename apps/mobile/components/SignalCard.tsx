@@ -2,7 +2,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { SignalDto } from '@qpulse/shared';
 import { Direction, SignalStatus } from '@qpulse/shared';
-import { colors, radii, spacing } from '@/constants/theme';
+import { radii, spacing } from '@/constants/theme';
 import { useAppStore } from '@/store/useAppStore';
 
 interface SignalCardProps {
@@ -10,7 +10,7 @@ interface SignalCardProps {
 }
 
 function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString('ru-RU', {
+  return new Date(iso).toLocaleDateString('en-US', {
     day: '2-digit',
     month: 'short',
     hour: '2-digit',
@@ -23,79 +23,116 @@ function formatPrice(value: number): string {
 }
 
 export function SignalCard({ signal }: SignalCardProps) {
+  const themeColors = useAppStore((s) => s.colors);
   const expanded = useAppStore((s) => s.expandedSignalIds.has(signal.id));
   const toggleExpanded = useAppStore((s) => s.toggleExpanded);
 
   const isLong = signal.direction === Direction.LONG;
-  const directionColor = isLong ? colors.long : colors.short;
+  const directionColor = isLong ? themeColors.long : themeColors.short;
   const statusLabel = signal.status === SignalStatus.OPEN ? 'OPEN' : 'ACTIVE';
 
   return (
     <Pressable
-      style={styles.card}
+      style={[
+        styles.card,
+        { backgroundColor: themeColors.card, borderColor: themeColors.cardBorder },
+      ]}
       onPress={() => toggleExpanded(signal.id)}
       accessibilityRole="button"
     >
       <View style={styles.header}>
         <View style={styles.pairRow}>
-          <Text style={styles.pair}>{signal.pair}</Text>
+          <Text style={[styles.pair, { color: themeColors.text }]}>{signal.pair}</Text>
           <View style={[styles.badge, { backgroundColor: directionColor + '22' }]}>
             <Text style={[styles.badgeText, { color: directionColor }]}>
               {signal.direction ?? signal.action ?? '—'}
             </Text>
           </View>
         </View>
-        <View style={[styles.statusBadge, signal.status === SignalStatus.ACTIVE && styles.statusActive]}>
-          <Text style={[styles.statusText, signal.status === SignalStatus.ACTIVE && styles.statusTextActive]}>
+        <View
+          style={[
+            styles.statusBadge,
+            { backgroundColor: themeColors.accent + '33' },
+            signal.status === SignalStatus.ACTIVE && { backgroundColor: themeColors.warning + '33' },
+          ]}
+        >
+          <Text
+            style={[
+              styles.statusText,
+              { color: themeColors.accent },
+              signal.status === SignalStatus.ACTIVE && { color: themeColors.warning },
+            ]}
+          >
             {statusLabel}
           </Text>
         </View>
       </View>
 
       <View style={styles.row}>
-        <Text style={styles.label}>Entry</Text>
-        <Text style={styles.value}>{formatPrice(signal.entryPrice)}</Text>
+        <Text style={[styles.label, { color: themeColors.textSecondary }]}>Entry</Text>
+        <Text style={[styles.value, { color: themeColors.text }]}>{formatPrice(signal.entryPrice)}</Text>
       </View>
       <View style={styles.row}>
-        <Text style={styles.label}>Capital</Text>
-        <Text style={styles.value}>{signal.capitalPercentage}%</Text>
+        <Text style={[styles.label, { color: themeColors.textSecondary }]}>Capital</Text>
+        <Text style={[styles.value, { color: themeColors.text }]}>{signal.capitalPercentage}%</Text>
       </View>
       {signal.leverage != null && (
         <View style={styles.row}>
-          <Text style={styles.label}>Leverage</Text>
-          <Text style={styles.value}>{signal.leverage}x</Text>
+          <Text style={[styles.label, { color: themeColors.textSecondary }]}>Leverage</Text>
+          <Text style={[styles.value, { color: themeColors.text }]}>{signal.leverage}x</Text>
         </View>
       )}
 
       {expanded && signal.details && (
-        <View style={styles.details}>
-          {signal.details.targets.map((tp) => (
-            <View key={tp.label} style={styles.row}>
-              <Text style={styles.label}>{tp.label}</Text>
-              <Text style={styles.value}>
-                {formatPrice(tp.price)} ({tp.profitPercent > 0 ? '+' : ''}
-                {tp.profitPercent}%)
-              </Text>
-            </View>
-          ))}
+        <View style={[styles.details, { borderTopColor: themeColors.cardBorder }]}>
+          {signal.details.targets.map((tp) => {
+            const reached = tp.hit === true;
+            return (
+              <View key={tp.label} style={styles.row}>
+                <Text style={[styles.label, { color: themeColors.textSecondary }, !reached && styles.labelMuted]}>
+                  {tp.label}
+                </Text>
+                <Text
+                  style={[
+                    styles.value,
+                    { color: themeColors.text },
+                    reached ? { color: themeColors.success } : styles.valuePending,
+                  ]}
+                >
+                  {reached ? '✓ ' : ''}
+                  {formatPrice(tp.price)} ({tp.profitPercent > 0 ? '+' : ''}
+                  {tp.profitPercent}%)
+                </Text>
+              </View>
+            );
+          })}
           {signal.details.stopLoss != null && (
             <View style={styles.row}>
-              <Text style={[styles.label, { color: colors.danger }]}>Stop Loss</Text>
-              <Text style={[styles.value, { color: colors.danger }]}>
+              <Text style={[styles.label, { color: themeColors.danger }]}>Stop Loss</Text>
+              <Text
+                style={[
+                  styles.value,
+                  { color: themeColors.danger },
+                  signal.slHit ? { color: themeColors.success } : styles.valuePending,
+                ]}
+              >
+                {signal.slHit ? '✓ ' : ''}
                 {formatPrice(signal.details.stopLoss)}
               </Text>
             </View>
           )}
-          <Text style={styles.date}>Opened {formatDate(signal.openDate)}</Text>
+          <Text style={[styles.date, { color: themeColors.textMuted }]}>Opened {formatDate(signal.openDate)}</Text>
         </View>
       )}
 
       <View style={styles.expandHint}>
-        <Text style={styles.expandText}>{expanded ? 'Свернуть' : 'Подробнее'}</Text>
+        <Text style={[styles.expandText, { color: themeColors.textMuted }]}>
+          {expanded ? 'Collapse' : 'Details'}
+        </Text>
         <Ionicons
           name={expanded ? 'chevron-up' : 'chevron-down'}
           size={16}
-          color={colors.textMuted}
+          color={themeColors.textMuted}
         />
       </View>
     </Pressable>
@@ -104,12 +141,10 @@ export function SignalCard({ signal }: SignalCardProps) {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: colors.card,
     borderRadius: radii.md,
     padding: spacing.md,
     marginBottom: spacing.sm,
     borderWidth: 1,
-    borderColor: colors.cardBorder,
   },
   header: {
     flexDirection: 'row',
@@ -124,7 +159,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   pair: {
-    color: colors.text,
     fontSize: 18,
     fontWeight: '700',
   },
@@ -138,22 +172,14 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   statusBadge: {
-    backgroundColor: colors.accent + '33',
     paddingHorizontal: spacing.sm,
     paddingVertical: 4,
     borderRadius: radii.sm,
   },
-  statusActive: {
-    backgroundColor: colors.warning + '33',
-  },
   statusText: {
-    color: colors.accent,
     fontSize: 11,
     fontWeight: '700',
     letterSpacing: 0.5,
-  },
-  statusTextActive: {
-    color: colors.warning,
   },
   row: {
     flexDirection: 'row',
@@ -161,22 +187,24 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   label: {
-    color: colors.textSecondary,
     fontSize: 14,
   },
   value: {
-    color: colors.text,
     fontSize: 14,
     fontWeight: '600',
+  },
+  labelMuted: {
+    opacity: 0.65,
+  },
+  valuePending: {
+    opacity: 0.75,
   },
   details: {
     marginTop: spacing.sm,
     paddingTop: spacing.sm,
     borderTopWidth: 1,
-    borderTopColor: colors.cardBorder,
   },
   date: {
-    color: colors.textMuted,
     fontSize: 12,
     marginTop: spacing.sm,
   },
@@ -188,7 +216,6 @@ const styles = StyleSheet.create({
     marginTop: spacing.sm,
   },
   expandText: {
-    color: colors.textMuted,
     fontSize: 12,
   },
 });

@@ -121,7 +121,7 @@ Timeframe — **контекст Results**, не поле Signal.
 apps/api/src/
 ├── signals/           # CRUD (admin) + public read + event emit
 ├── results/           # ResultsSummary + closed signals by closeDate
-├── home-content/      # BTC stats, ticker, social links
+├── home-content/      # Market metrics, fear & greed, social links
 ├── settings/          # menu links + disclaimer, telegramFabUrl
 ├── reviews/           # POST review + admin moderation
 ├── devices/           # push token register/unregister

@@ -1,7 +1,8 @@
 import { StyleSheet, Text, View } from 'react-native';
 import type { SignalDto } from '@qpulse/shared';
 import { Direction } from '@qpulse/shared';
-import { colors, radii, spacing } from '@/constants/theme';
+import { radii, spacing } from '@/constants/theme';
+import { useAppStore } from '@/store/useAppStore';
 
 interface ClosedSignalCardProps {
   signal: SignalDto;
@@ -9,7 +10,7 @@ interface ClosedSignalCardProps {
 
 function formatDate(iso: string | null | undefined): string {
   if (!iso) return '—';
-  return new Date(iso).toLocaleDateString('ru-RU', {
+  return new Date(iso).toLocaleDateString('en-US', {
     day: '2-digit',
     month: 'short',
     year: 'numeric',
@@ -17,9 +18,10 @@ function formatDate(iso: string | null | undefined): string {
 }
 
 export function ClosedSignalCard({ signal }: ClosedSignalCardProps) {
+  const themeColors = useAppStore((s) => s.colors);
   const profit = signal.profitPercentage ?? 0;
   const isProfit = profit >= 0;
-  const profitColor = isProfit ? colors.success : colors.danger;
+  const profitColor = isProfit ? themeColors.success : themeColors.danger;
 
   let outcomeLabel = 'Closed';
   if (signal.liquidated) outcomeLabel = 'Liquidated';
@@ -27,14 +29,19 @@ export function ClosedSignalCard({ signal }: ClosedSignalCardProps) {
   else if (signal.targetHitLabel) outcomeLabel = signal.targetHitLabel;
 
   const directionColor =
-    signal.direction === Direction.LONG ? colors.long : colors.short;
+    signal.direction === Direction.LONG ? themeColors.long : themeColors.short;
 
   return (
-    <View style={styles.card}>
+    <View
+      style={[
+        styles.card,
+        { backgroundColor: themeColors.card, borderColor: themeColors.cardBorder },
+      ]}
+    >
       <View style={styles.header}>
         <View>
-          <Text style={styles.pair}>{signal.pair}</Text>
-          <Text style={styles.dates}>
+          <Text style={[styles.pair, { color: themeColors.text }]}>{signal.pair}</Text>
+          <Text style={[styles.dates, { color: themeColors.textMuted }]}>
             {formatDate(signal.openDate)} → {formatDate(signal.closeDate)}
           </Text>
         </View>
@@ -49,13 +56,13 @@ export function ClosedSignalCard({ signal }: ClosedSignalCardProps) {
         </View>
       </View>
 
-      <View style={styles.footer}>
+      <View style={[styles.footer, { borderTopColor: themeColors.cardBorder }]}>
         {signal.direction && (
           <View style={[styles.chip, { backgroundColor: directionColor + '22' }]}>
             <Text style={[styles.chipText, { color: directionColor }]}>{signal.direction}</Text>
           </View>
         )}
-        <Text style={styles.entry}>Entry {signal.entryPrice}</Text>
+        <Text style={[styles.entry, { color: themeColors.textSecondary }]}>Entry {signal.entryPrice}</Text>
       </View>
     </View>
   );
@@ -63,24 +70,20 @@ export function ClosedSignalCard({ signal }: ClosedSignalCardProps) {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: colors.card,
     borderRadius: radii.md,
     padding: spacing.md,
     marginBottom: spacing.sm,
     borderWidth: 1,
-    borderColor: colors.cardBorder,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
   pair: {
-    color: colors.text,
     fontSize: 16,
     fontWeight: '700',
   },
   dates: {
-    color: colors.textMuted,
     fontSize: 12,
     marginTop: 2,
   },
@@ -109,7 +112,6 @@ const styles = StyleSheet.create({
     marginTop: spacing.sm,
     paddingTop: spacing.sm,
     borderTopWidth: 1,
-    borderTopColor: colors.cardBorder,
   },
   chip: {
     paddingHorizontal: spacing.sm,
@@ -121,7 +123,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   entry: {
-    color: colors.textSecondary,
     fontSize: 12,
   },
 });

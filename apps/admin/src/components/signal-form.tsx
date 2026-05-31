@@ -1,10 +1,23 @@
 'use client';
 
-import { useForm } from 'react-hook-form';
+import { useFieldArray, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Direction, MarketType, SignalStatus, type SignalDto } from '@qpulse/shared';
-import { Button, Card, Input, Label, Select, Textarea } from '@/components/ui';
+import {
+  deriveExecutionFields,
+  Direction,
+  MarketType,
+  SignalStatus,
+  type SignalDto,
+} from '@qpulse/shared';
+import { Button, Card, Input, Label, Select } from '@/components/ui';
+
+const targetSchema = z.object({
+  label: z.string().min(1),
+  price: z.coerce.number(),
+  profitPercent: z.coerce.number(),
+  hit: z.boolean(),
+});
 
 const signalSchema = z.object({
   pair: z.string().min(1),
@@ -17,13 +30,12 @@ const signalSchema = z.object({
   openDate: z.string().min(1),
   closeDate: z.string().optional(),
   status: z.nativeEnum(SignalStatus),
-  currentTpLevel: z.coerce.number().optional().nullable(),
-  slHit: z.boolean().optional(),
-  liquidated: z.boolean().optional(),
-  targetHitLabel: z.string().optional(),
+  slHit: z.boolean(),
+  liquidated: z.boolean(),
   profitPercentage: z.coerce.number().optional().nullable(),
   logoUrl: z.string().optional(),
-  detailsJson: z.string().optional(),
+  stopLoss: z.string().optional(),
+  targets: z.array(targetSchema),
 });
 
 type SignalFormValues = z.infer<typeof signalSchema>;
@@ -41,13 +53,12 @@ function toFormValues(signal?: SignalDto): SignalFormValues {
       openDate: new Date().toISOString().slice(0, 16),
       closeDate: '',
       status: SignalStatus.OPEN,
-      currentTpLevel: null,
       slHit: false,
       liquidated: false,
-      targetHitLabel: '',
       profitPercentage: null,
       logoUrl: '',
-      detailsJson: JSON.stringify({ targets: [] }, null, 2),
+      stopLoss: '',
+      targets: [],
     };
   }
 
@@ -62,21 +73,39 @@ function toFormValues(signal?: SignalDto): SignalFormValues {
     openDate: signal.openDate.slice(0, 16),
     closeDate: signal.closeDate?.slice(0, 16) ?? '',
     status: signal.status,
-    currentTpLevel: signal.currentTpLevel ?? null,
     slHit: signal.slHit,
     liquidated: signal.liquidated,
-    targetHitLabel: signal.targetHitLabel ?? '',
     profitPercentage: signal.profitPercentage ?? null,
     logoUrl: signal.logoUrl ?? '',
-    detailsJson: JSON.stringify(signal.details ?? { targets: [] }, null, 2),
+    stopLoss: signal.details?.stopLoss != null ? String(signal.details.stopLoss) : '',
+    targets: (signal.details?.targets ?? []).map((t) => ({
+      label: t.label,
+      price: t.price,
+      profitPercent: t.profitPercent,
+      hit: t.hit === true,
+    })),
   };
 }
 
+function parseStopLoss(raw?: string): number | undefined {
+  if (!raw?.trim()) return undefined;
+  const n = Number(raw);
+  return Number.isNaN(n) ? undefined : n;
+}
+
 function toApiPayload(values: SignalFormValues): Record<string, unknown> {
-  let details: unknown = undefined;
-  if (values.detailsJson?.trim()) {
-    details = JSON.parse(values.detailsJson);
-  }
+  const stopLoss = parseStopLoss(values.stopLoss);
+  const details = {
+    targets: values.targets.map((t) => ({
+      label: t.label,
+      price: t.price,
+      profitPercent: t.profitPercent,
+      hit: t.hit,
+    })),
+    ...(stopLoss !== undefined ? { stopLoss } : {}),
+  };
+
+  const derived = deriveExecutionFields(details, values.slHit);
 
   return {
     pair: values.pair,
@@ -89,10 +118,10 @@ function toApiPayload(values: SignalFormValues): Record<string, unknown> {
     openDate: new Date(values.openDate).toISOString(),
     closeDate: values.closeDate ? new Date(values.closeDate).toISOString() : null,
     status: values.status,
-    currentTpLevel: values.currentTpLevel ?? null,
-    slHit: values.slHit ?? false,
-    liquidated: values.liquidated ?? false,
-    targetHitLabel: values.targetHitLabel || null,
+    currentTpLevel: derived.currentTpLevel,
+    slHit: derived.slHit,
+    liquidated: values.liquidated,
+    targetHitLabel: derived.targetHitLabel,
     profitPercentage: values.profitPercentage ?? null,
     logoUrl: values.logoUrl || null,
     details,
@@ -111,19 +140,19 @@ export function SignalForm({
   const {
     register,
     handleSubmit,
+    control,
+    watch,
     formState: { errors },
   } = useForm<SignalFormValues>({
     resolver: zodResolver(signalSchema),
     defaultValues: toFormValues(initial),
   });
 
-  const submit = handleSubmit((values) => {
-    try {
-      onSubmit(toApiPayload(values));
-    } catch {
-      alert('Invalid JSON in details field');
-    }
-  });
+  const { fields, append, remove } = useFieldArray({ control, name: 'targets' });
+  const stopLossValue = watch('stopLoss');
+  const hasStopLoss = !!stopLossValue?.trim() && !Number.isNaN(Number(stopLossValue));
+
+  const submit = handleSubmit((values) => onSubmit(toApiPayload(values)));
 
   return (
     <Card>
@@ -196,15 +225,75 @@ export function SignalForm({
           <Label>Logo URL</Label>
           <Input {...register('logoUrl')} />
         </div>
-        <div className="md:col-span-2">
-          <Label>Details (JSON)</Label>
-          <Textarea rows={8} className="font-mono text-xs" {...register('detailsJson')} />
+
+        <div className="md:col-span-2 space-y-3 rounded-lg border border-zinc-800 p-4">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium text-zinc-200">Take-profit targets</span>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() =>
+                append({
+                  label: `Target ${String(fields.length + 1).padStart(2, '0')}`,
+                  price: 0,
+                  profitPercent: 0,
+                  hit: false,
+                })
+              }
+            >
+              + Target
+            </Button>
+          </div>
+          {fields.length === 0 ? (
+            <p className="text-sm text-zinc-500">No targets — add TP levels.</p>
+          ) : null}
+          {fields.map((field, index) => (
+            <div
+              key={field.id}
+              className="grid gap-3 rounded-md border border-zinc-800/80 bg-zinc-900/40 p-3 md:grid-cols-[1fr_1fr_1fr_auto_auto]"
+            >
+              <div>
+                <span className="text-xs text-zinc-400">Label</span>
+                <Input {...register(`targets.${index}.label`)} />
+              </div>
+              <div>
+                <span className="text-xs text-zinc-400">Price</span>
+                <Input type="number" step="any" {...register(`targets.${index}.price`)} />
+              </div>
+              <div>
+                <span className="text-xs text-zinc-400">Profit %</span>
+                <Input type="number" step="any" {...register(`targets.${index}.profitPercent`)} />
+              </div>
+              <label className="flex items-end gap-2 pb-2 text-sm text-zinc-300">
+                <input type="checkbox" {...register(`targets.${index}.hit`)} />
+                Reached
+              </label>
+              <Button type="button" variant="secondary" onClick={() => remove(index)}>
+                Remove
+              </Button>
+            </div>
+          ))}
         </div>
+
+        <div className="md:col-span-2 space-y-3 rounded-lg border border-zinc-800 p-4">
+          <span className="text-sm font-medium text-zinc-200">Stop Loss</span>
+          <div className="flex flex-wrap items-end gap-4">
+            <div className="min-w-[12rem] flex-1">
+              <span className="text-xs text-zinc-400">Price</span>
+              <Input type="number" step="any" {...register('stopLoss')} placeholder="Not set" />
+            </div>
+            {hasStopLoss ? (
+              <label className="flex items-center gap-2 pb-2 text-sm text-zinc-300">
+                <input type="checkbox" {...register('slHit')} />
+                SL reached
+              </label>
+            ) : (
+              <p className="pb-2 text-sm text-zinc-500">Set an SL price to mark it as reached.</p>
+            )}
+          </div>
+        </div>
+
         <div className="flex items-center gap-4 md:col-span-2">
-          <label className="flex items-center gap-2 text-sm text-zinc-300">
-            <input type="checkbox" {...register('slHit')} />
-            SL hit
-          </label>
           <label className="flex items-center gap-2 text-sm text-zinc-300">
             <input type="checkbox" {...register('liquidated')} />
             Liquidated

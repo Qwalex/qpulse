@@ -1,0 +1,3 @@
+export const INTEGRATIONS_API_KEY_ENV = 'INTEGRATIONS_API_KEY';
+
+export const INTEGRATIONS_API_KEY_HEADER = 'x-api-key';

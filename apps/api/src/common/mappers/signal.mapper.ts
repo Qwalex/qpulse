@@ -4,6 +4,8 @@ import { SignalDto } from '@qpulse/shared';
 export function mapSignal(signal: Signal): SignalDto {
   return {
     id: signal.id,
+    externalId: signal.externalId,
+    source: signal.source,
     pair: signal.pair,
     marketType: signal.marketType as SignalDto['marketType'],
     direction: signal.direction as SignalDto['direction'],

@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { Prisma, SignalStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { mapSignal, normalizeSignalInput } from '../common/mappers/signal.mapper';
+import { applyDetailsExecutionFields } from '../common/utils/signal-details.util';
 import { parseLiveStatus, parseMarketType } from '../common/utils/query-params';
 import { SignalEventService } from '../events/signal-event.service';
 
@@ -45,9 +46,10 @@ export class SignalsService {
   }
 
   async create(data: Record<string, unknown>) {
-    this.validateSignal(data);
+    const normalized = applyDetailsExecutionFields(data);
+    this.validateSignal(normalized);
     const created = await this.prisma.signal.create({
-      data: this.toCreateInput(data),
+      data: this.toCreateInput(normalized),
     });
     await this.events.handleCreate(created);
     return mapSignal(created);
@@ -56,10 +58,11 @@ export class SignalsService {
   async update(id: string, data: Record<string, unknown>) {
     const before = await this.prisma.signal.findUnique({ where: { id } });
     if (!before) throw new NotFoundException('Signal not found');
-    this.validateSignal({ ...before, ...data });
+    const normalized = applyDetailsExecutionFields({ ...before, ...data });
+    this.validateSignal(normalized);
     const after = await this.prisma.signal.update({
       where: { id },
-      data: this.toUpdateInput(data),
+      data: this.toUpdateInput(normalized),
     });
     await this.events.handleUpdate(before, after);
     return mapSignal(after);
@@ -73,6 +76,34 @@ export class SignalsService {
     return { ok: true };
   }
 
+  async findByExternalId(externalId: string) {
+    const signal = await this.prisma.signal.findUnique({ where: { externalId } });
+    if (!signal) throw new NotFoundException('Signal not found');
+    return mapSignal(signal);
+  }
+
+  async upsertByExternalId(externalId: string, data: Record<string, unknown>) {
+    const trimmed = String(externalId ?? '').trim();
+    if (!trimmed) {
+      throw new BadRequestException('externalId is required');
+    }
+    const existing = await this.prisma.signal.findUnique({ where: { externalId: trimmed } });
+    if (existing) {
+      return mapSignal(existing);
+    }
+    return this.create({ ...data, externalId: trimmed });
+  }
+
+  async updateByExternalId(externalId: string, data: Record<string, unknown>) {
+    const trimmed = String(externalId ?? '').trim();
+    if (!trimmed) {
+      throw new BadRequestException('externalId is required');
+    }
+    const before = await this.prisma.signal.findUnique({ where: { externalId: trimmed } });
+    if (!before) throw new NotFoundException('Signal not found');
+    return this.update(before.id, data);
+  }
+
   private validateSignal(data: Record<string, unknown>) {
     if (data.status === SignalStatus.CLOSED && !data.closeDate) {
       throw new BadRequestException('closeDate is required when status is CLOSED');
@@ -84,6 +115,8 @@ export class SignalsService {
 
   private toCreateInput(data: Record<string, unknown>): Prisma.SignalCreateInput {
     return {
+      externalId: data.externalId as string | undefined,
+      source: data.source as string | undefined,
       pair: data.pair as string,
       marketType: data.marketType as Prisma.SignalCreateInput['marketType'],
       direction: data.direction as Prisma.SignalCreateInput['direction'],

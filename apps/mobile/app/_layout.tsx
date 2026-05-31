@@ -220,9 +220,9 @@ export default function RootLayout() {
 
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
 
-            <Stack.Screen name="results" options={{ title: 'Результаты' }} />
+            <Stack.Screen name="results" options={{ title: 'Results' }} />
 
-            <Stack.Screen name="rate-review" options={{ title: 'Оценить приложение' }} />
+            <Stack.Screen name="rate-review" options={{ title: 'Rate app' }} />
 
           </Stack>
 

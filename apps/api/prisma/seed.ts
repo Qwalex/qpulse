@@ -33,16 +33,12 @@ async function main() {
     where: { id: 'default' },
     create: {
       id: 'default',
-      btcPrice: 67234.5,
-      btcChange24h: 2.4,
-      btcMarketCap: '$1.32T',
-      btcVolume: '$28.5B',
+      totalMarketCap: '$2.84T',
+      totalMarketCapChange24h: 1.8,
+      altcoinSeasonIndex: 38,
+      altcoinSeasonLabel: 'Bitcoin Season',
       fearGreedValue: 72,
       fearGreedLabel: 'Greed',
-      ticker: [
-        { pair: 'BTC/USDT', price: 67234, change: 2.4 },
-        { pair: 'ETH/USDT', price: 3456, change: 1.8 },
-      ],
       socialLinks: [{ id: 'tg', label: 'Telegram', url: 'https://t.me/qpulse', icon: 'telegram' }],
     },
     update: {},
@@ -114,7 +110,10 @@ async function main() {
       capitalPercentage: 2,
       status: SignalStatus.OPEN,
       openDate: new Date('2026-05-20T00:00:00Z'),
-      details: { targets: [{ label: 'Target 01', price: 0.25544, profitPercent: 3 }], stopLoss: 0.231 },
+      details: {
+        targets: [{ label: 'Target 01', price: 0.25544, profitPercent: 3, hit: false }],
+        stopLoss: 0.231,
+      },
     },
     {
       pair: 'BTC / USDT',
@@ -126,7 +125,13 @@ async function main() {
       leverage: 5,
       currentTpLevel: 2,
       openDate: new Date('2026-05-18T00:00:00Z'),
-      details: { targets: [{ label: 'Target 01', price: 66000, profitPercent: 1.5 }], stopLoss: 63000 },
+      details: {
+        targets: [
+          { label: 'Target 01', price: 65500, profitPercent: 0.8, hit: true },
+          { label: 'Target 02', price: 66000, profitPercent: 1.5, hit: true },
+        ],
+        stopLoss: 63000,
+      },
     },
     {
       pair: 'ADA / USDT',
@@ -137,7 +142,10 @@ async function main() {
       status: SignalStatus.ACTIVE,
       currentTpLevel: 1,
       openDate: new Date('2026-05-19T00:00:00Z'),
-      details: { targets: [{ label: 'Target 01', price: 0.255, profitPercent: 2.8 }], stopLoss: 0.23 },
+      details: {
+        targets: [{ label: 'Target 01', price: 0.255, profitPercent: 2.8, hit: true }],
+        stopLoss: 0.23,
+      },
     },
     {
       pair: 'ETH / USDT',
@@ -168,8 +176,10 @@ async function main() {
       closeDate: new Date('2026-05-20T00:00:00Z'),
       details: {
         targets: [
-          { label: 'Target 01', price: 0.48, profitPercent: 4 },
-          { label: 'Target 04', price: 0.35, profitPercent: 30 },
+          { label: 'Target 01', price: 0.48, profitPercent: 4, hit: true },
+          { label: 'Target 02', price: 0.42, profitPercent: 16, hit: true },
+          { label: 'Target 03', price: 0.38, profitPercent: 24, hit: true },
+          { label: 'Target 04', price: 0.35, profitPercent: 30, hit: true },
         ],
         stopLoss: 0.55,
       },

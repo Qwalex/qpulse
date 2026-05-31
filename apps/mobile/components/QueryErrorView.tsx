@@ -6,13 +6,13 @@ type QueryErrorViewProps = {
   onRetry?: () => void;
 };
 
-export function QueryErrorView({ message = 'Не удалось загрузить данные', onRetry }: QueryErrorViewProps) {
+export function QueryErrorView({ message = 'Failed to load data', onRetry }: QueryErrorViewProps) {
   return (
     <View style={styles.container}>
       <Text style={styles.message}>{message}</Text>
       {onRetry ? (
         <Pressable style={styles.button} onPress={onRetry}>
-          <Text style={styles.buttonText}>Повторить</Text>
+          <Text style={styles.buttonText}>Retry</Text>
         </Pressable>
       ) : null}
     </View>

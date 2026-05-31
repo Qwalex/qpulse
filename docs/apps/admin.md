@@ -25,7 +25,7 @@
 | `/results-summary` | CRUD stats per marketType + timeframe |
 | `/menu-links` | Settings menu editor |
 | `/reviews` | Review moderation (list + delete) |
-| `/home-content` | BTC stats, ticker, fear&greed, socialLinks |
+| `/home-content` | Market metrics, fear&greed, socialLinks |
 | `/settings` | Disclaimer, telegramFabUrl |
 | `/notifications` | Push templates + delivery log |
 
