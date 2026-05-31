@@ -53,9 +53,9 @@ export default function MoreScreen() {
 
 
   if (menuQuery.isError) {
-
-    return <QueryErrorView onRetry={() => menuQuery.refetch()} />;
-
+    const message =
+      menuQuery.error instanceof Error ? menuQuery.error.message : 'Failed to load menu';
+    return <QueryErrorView message={message} onRetry={() => menuQuery.refetch()} />;
   }
 
 

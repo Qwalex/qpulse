@@ -21,6 +21,8 @@ export function mapSignal(signal: Signal): SignalDto {
     liquidated: signal.liquidated,
     targetHitLabel: signal.targetHitLabel,
     profitPercentage: signal.profitPercentage,
+    positionSizeUsdt: signal.positionSizeUsdt,
+    realizedPnlUsdt: signal.realizedPnlUsdt,
     logoUrl: signal.logoUrl,
     details: signal.details as SignalDto['details'],
     createdAt: signal.createdAt.toISOString(),

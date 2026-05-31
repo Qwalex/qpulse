@@ -168,6 +168,19 @@ docker run --rm -p 3000:3000 qpulse-admin
 
 ---
 
+## Coordinated deploy: Results + bb-trader sync
+
+При релизе с миграцией `20260531140000_signal_pnl_drop_results_summary` (drop `ResultsSummary`, колонки PnL на `Signal`):
+
+1. **QPulse API** — redeploy первым (`prisma migrate deploy` в entrypoint).
+2. **QPulse Admin** — redeploy (Results UI, batch delete).
+3. **signalsBot API** (ветка `cabinets`) — redeploy mapper/status/PnL PATCH.
+4. **Mobile** — опционально (контракт `GET /results` не менялся).
+
+После деплоя summary на Home/Results считается из реальных CLOSED-сигналов (seed 567% исчезнет).
+
+---
+
 ## Post-deploy checklist
 
 - [ ] `GET /health` → 200

@@ -30,6 +30,11 @@ export class SignalsAdminController {
     return this.signals.findOne(id);
   }
 
+  @Post('batch-delete')
+  batchDelete(@Body() body: { ids?: string[] }) {
+    return this.signals.removeMany(body.ids ?? []);
+  }
+
   @Post()
   create(@Body() body: Record<string, unknown>) {
     return this.signals.create(body);

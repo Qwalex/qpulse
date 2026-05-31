@@ -73,7 +73,7 @@ GET /results?marketType=spot|futures&timeframe=1W|1M|3M|6M|1Y
 }
 ```
 
-- `summary` — из таблицы `ResultsSummary` (не вычисляется)
+- `summary` — вычисляется из `CLOSED` сигналов в rolling window (`computeResultsSummary`)
 - `signals` — только `status=CLOSED`, `closeDate` в rolling window timeframe
 
 ### Settings
@@ -105,6 +105,35 @@ POST /reviews
 **POST response:** `ReviewDto` — создаёт или обновляет отзыв для `deviceId` (один отзыв на устройство).
 
 Mobile stores `ReviewDto` locally (AsyncStorage) and hides "Rate app", showing "Edit review" instead.
+
+### Client errors (mobile telemetry)
+
+```
+POST /client-errors
+```
+
+Rate limit: `public-write` (30/min per IP).
+
+**Body:** `ClientErrorCreateDto`
+
+```json
+{
+  "kind": "RENDER",
+  "message": "Cannot read property 'toLocaleString' of undefined",
+  "stack": "...",
+  "screen": "home",
+  "apiPath": "/home-content",
+  "deviceId": "dev_...",
+  "platform": "android",
+  "appVersion": "1.0.0"
+}
+```
+
+`kind`: `RENDER` | `QUERY` | `MUTATION` | `NETWORK` | `JSON`
+
+**Response:** `{ "ok": true, "id": "uuid" }`
+
+Mobile sends errors from `request()` failures and `AppErrorBoundary` (render crashes). Duplicates are deduped client-side (~5 min).
 
 ### Devices (push tokens)
 
@@ -154,7 +183,11 @@ Upsert by `externalId`: if signal with this `externalId` already exists, returns
   "entryPrice": 65000,
   "capitalPercentage": 2,
   "leverage": 5,
-  "status": "OPEN",
+  "positionSizeUsdt": 200,
+  "realizedPnlUsdt": 12.5,
+  "profitPercentage": 31.25,
+  "status": "CLOSED",
+  "closeDate": "2026-05-31T12:00:00Z",
   "openDate": "2026-05-31T10:00:00Z",
   "details": {
     "targets": [
@@ -170,6 +203,23 @@ Upsert by `externalId`: if signal with this `externalId` already exists, returns
 ### PATCH /integrations/signals/:externalId
 
 Partial update; same execution fields as admin PATCH. Triggers `SignalEventService` (WS + push).
+
+**Trade metrics (bb-trader sync):**
+
+| Field | Notes |
+|-------|-------|
+| `positionSizeUsdt` | Entry notional (bb-trader `orderUsd`) |
+| `realizedPnlUsdt` | Absolute PnL at close |
+| `profitPercentage` | Optional on wire; API recalculates when PnL + size present |
+
+**Status mapping (signalsBot → QPulse):**
+
+| bb-trader | QPulse |
+|-----------|--------|
+| `PENDING`, `PARSED`, `ORDERS_PLACED` (no fill) | `OPEN` |
+| spot `OPEN`, futures filled entry | `ACTIVE` |
+| `CLOSED_*`, liquidation | `CLOSED` (+ `closeDate`) |
+| `FAILED`, `*CANCEL*` | `CANCELLED` |
 
 **Errors:**
 
@@ -209,6 +259,7 @@ Counts: live signals, closed, cancelled, pending reviews, recent push events.
 
 ```
 GET|POST       /admin/signals?status=open|active|closed|cancelled&marketType=spot|futures
+POST           /admin/signals/batch-delete   # { "ids": ["uuid", ...] } max 100
 GET|PATCH|DELETE /admin/signals/:id
 ```
 
@@ -222,6 +273,8 @@ GET|PATCH|DELETE /admin/signals/:id
   "liquidated": false,
   "leverage": 5,
   "profitPercentage": 30.0,
+  "positionSizeUsdt": 100.0,
+  "realizedPnlUsdt": 15.0,
   "targetHitLabel": "Tp 3 Hit",
   "closeDate": "2026-05-20T00:00:00Z",
   "details": {
@@ -238,6 +291,12 @@ GET|PATCH|DELETE /admin/signals/:id
 
 **DELETE:** hard delete; WS `signal:deleted`; no push.
 
+**Batch delete:** same semantics per id; returns `{ ok: true, deleted: N }`.
+
+### Results (admin UI)
+
+Admin **Results** page uses public `GET /results` (computed summary + closed signals). Manual `ResultsSummary` CRUD removed.
+
 ### Menu links
 
 ```
@@ -247,19 +306,14 @@ GET|POST|PATCH|DELETE /admin/menu-links/:id
 
 ### Results summary
 
-```
-GET|POST /admin/results-summary
-PATCH    /admin/results-summary/:marketType/:timeframe
-DELETE   /admin/results-summary/:marketType/:timeframe
-```
-
-Composite key: `marketType` (spot/futures) + `timeframe` (1W|1M|3M|6M|1Y).
+Removed — summary is computed from closed signals (`GET /results`).
 
 ### Reviews moderation
 
 ```
 GET    /admin/reviews
 DELETE /admin/reviews/:id
+GET    /admin/client-errors?limit=100
 ```
 
 ### Home content

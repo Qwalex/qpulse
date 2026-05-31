@@ -9,27 +9,11 @@ import type {
   ReviewMineResponse,
   SignalDto,
 } from '@qpulse/shared';
-import { MarketType } from '@qpulse/shared';
+import { ClientErrorKind, MarketType } from '@qpulse/shared';
+import { getApiBasePath as buildApiBasePath, getRealtimeBaseUrl, normalizeBaseUrl, resolveApiUrl } from '@/lib/api-base';
+import { reportRequestError } from '@/lib/client-error-report';
 
-const PRODUCTION_API_HOST = 'https://qpulse-api-production.up.railway.app';
-
-function resolveApiUrl(): string {
-  if (process.env.EXPO_PUBLIC_API_URL) {
-    return process.env.EXPO_PUBLIC_API_URL;
-  }
-  return typeof __DEV__ !== 'undefined' && __DEV__
-    ? 'http://localhost:3001'
-    : PRODUCTION_API_HOST;
-}
-
-const API_URL = resolveApiUrl();
-const WS_URL = process.env.EXPO_PUBLIC_WS_URL;
-
-function normalizeBaseUrl(url: string): string {
-  return url.replace(/\/api\/v1\/?$/, '').replace(/\/$/, '');
-}
-
-const API_BASE = `${normalizeBaseUrl(API_URL)}/api/v1`;
+const API_BASE = buildApiBasePath();
 
 function parseErrorMessage(path: string, status: number, text: string): string {
   if (!text.trim()) {
@@ -61,14 +45,16 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     });
   } catch (error) {
     const detail = error instanceof Error ? error.message : String(error);
-    throw new Error(
-      `Network error (${API_BASE}${path}): ${detail}. Check internet and EXPO_PUBLIC_API_URL.`,
-    );
+    const message = `Network error (${API_BASE}${path}): ${detail}. Check internet and EXPO_PUBLIC_API_URL.`;
+    reportRequestError(ClientErrorKind.NETWORK, message, path);
+    throw new Error(message);
   }
 
   if (!response.ok) {
     const text = await response.text().catch(() => '');
-    throw new Error(parseErrorMessage(path, response.status, text));
+    const message = parseErrorMessage(path, response.status, text);
+    reportRequestError(ClientErrorKind.NETWORK, message, path);
+    throw new Error(message);
   }
 
   if (response.status === 204) {
@@ -77,18 +63,22 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
   const body = await response.text();
   if (!body.trim()) {
-    throw new Error(`${path}: empty response body`);
+    const message = `${path}: empty response body`;
+    reportRequestError(ClientErrorKind.JSON, message, path);
+    throw new Error(message);
   }
 
   try {
     return JSON.parse(body) as T;
   } catch {
-    throw new Error(`${path}: invalid JSON response`);
+    const message = `${path}: invalid JSON response`;
+    reportRequestError(ClientErrorKind.JSON, message, path);
+    throw new Error(message);
   }
 }
 
 export function getApiUrl(): string {
-  return normalizeBaseUrl(API_URL);
+  return normalizeBaseUrl(resolveApiUrl());
 }
 
 export function getApiBasePath(): string {
@@ -96,10 +86,7 @@ export function getApiBasePath(): string {
 }
 
 export function getRealtimeUrl(): string {
-  if (WS_URL) {
-    return normalizeBaseUrl(WS_URL);
-  }
-  return normalizeBaseUrl(API_URL);
+  return getRealtimeBaseUrl();
 }
 
 function toApiMarketType(marketType: MarketType): string {

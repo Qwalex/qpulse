@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 
 import { Platform } from 'react-native';
 
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClientProvider } from '@tanstack/react-query';
 
 import { Stack, useRouter } from 'expo-router';
 
@@ -10,11 +10,15 @@ import { StatusBar } from 'expo-status-bar';
 
 import * as Notifications from 'expo-notifications';
 
+import { AppErrorBoundary } from '@/components/AppErrorBoundary';
+
 import { useSignalRealtime } from '@/hooks/useSignalRealtime';
 
 import { registerDevice } from '@/lib/api';
 
 import { getDeviceId } from '@/lib/deviceId';
+
+import { createAppQueryClient } from '@/lib/query-client';
 
 import { useAppStore } from '@/store/useAppStore';
 
@@ -40,21 +44,7 @@ Notifications.setNotificationHandler({
 
 
 
-const queryClient = new QueryClient({
-
-  defaultOptions: {
-
-    queries: {
-
-      staleTime: 30_000,
-
-      retry: 2,
-
-    },
-
-  },
-
-});
+const queryClient = createAppQueryClient();
 
 
 
@@ -196,43 +186,46 @@ export default function RootLayout() {
 
   return (
 
-    <QueryClientProvider client={queryClient}>
+    <AppErrorBoundary screen="root">
 
-      <ThemeProvider>
+      <QueryClientProvider client={queryClient}>
 
-        <RealtimeProvider>
+        <ThemeProvider>
 
-          <Stack
+          <RealtimeProvider>
 
-            screenOptions={{
+            <Stack
 
-              headerStyle: { backgroundColor: themeColors.background },
+              screenOptions={{
 
-              headerTintColor: themeColors.text,
+                headerStyle: { backgroundColor: themeColors.background },
 
-              headerTitleStyle: { fontWeight: '600' },
+                headerTintColor: themeColors.text,
 
-              contentStyle: { backgroundColor: themeColors.background },
+                headerTitleStyle: { fontWeight: '600' },
 
-            }}
+                contentStyle: { backgroundColor: themeColors.background },
 
-          >
+              }}
 
-            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            >
 
-            <Stack.Screen name="results" options={{ title: 'Results' }} />
+              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
 
-            <Stack.Screen name="rate-review" options={{ title: 'Rate app' }} />
+              <Stack.Screen name="results" options={{ title: 'Results' }} />
 
-          </Stack>
+              <Stack.Screen name="rate-review" options={{ title: 'Rate app' }} />
 
-        </RealtimeProvider>
+            </Stack>
 
-      </ThemeProvider>
+          </RealtimeProvider>
 
-    </QueryClientProvider>
+        </ThemeProvider>
+
+      </QueryClientProvider>
+
+    </AppErrorBoundary>
 
   );
 
 }
-

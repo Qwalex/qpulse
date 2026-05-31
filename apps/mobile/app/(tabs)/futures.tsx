@@ -83,9 +83,9 @@ export default function FuturesScreen() {
 
 
   if (signalsQuery.isError) {
-
-    return <QueryErrorView onRetry={() => signalsQuery.refetch()} />;
-
+    const message =
+      signalsQuery.error instanceof Error ? signalsQuery.error.message : 'Failed to load signals';
+    return <QueryErrorView message={message} onRetry={() => signalsQuery.refetch()} />;
   }
 
 

@@ -1,17 +1,11 @@
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { MarketType, ResultsTimeframe } from '@qpulse/shared';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { api, ApiError, type ResultsSummaryRow } from '@/lib/api';
+import { MarketType, TIMEFRAME_API_MAP } from '@qpulse/shared';
+import { api } from '@/lib/api';
 import {
-  Alert,
   Button,
   Card,
-  Input,
-  Label,
   PageHeader,
   Select,
   Spinner,
@@ -19,223 +13,214 @@ import {
   Td,
   Th,
 } from '@/components/ui';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
-const summarySchema = z.object({
-  marketType: z.nativeEnum(MarketType),
-  timeframe: z.nativeEnum(ResultsTimeframe),
-  totalTrades: z.coerce.number().int().min(0),
-  winTrades: z.coerce.number().int().min(0),
-  lossTrades: z.coerce.number().int().min(0),
-  winRate: z.coerce.number().min(0),
-  totalProfit: z.coerce.number(),
-});
+const TIMEFRAMES = Object.keys(TIMEFRAME_API_MAP);
 
-type SummaryForm = z.infer<typeof summarySchema>;
-
-function SummaryFormPanel({
-  initial,
-  onDone,
-}: {
-  initial?: ResultsSummaryRow;
-  onDone: () => void;
-}) {
+export default function ResultsPage() {
   const queryClient = useQueryClient();
-  const [error, setError] = useState<string | null>(null);
+  const [marketType, setMarketType] = useState<string>(MarketType.FUTURES);
+  const [timeframe, setTimeframe] = useState('3M');
+  const [selected, setSelected] = useState<Set<string>>(new Set());
 
-  const { register, handleSubmit } = useForm<SummaryForm>({
-    resolver: zodResolver(summarySchema),
-    defaultValues: initial
-      ? {
-          marketType: initial.marketType as MarketType,
-          timeframe: initial.timeframe as ResultsTimeframe,
-          totalTrades: initial.totalTrades,
-          winTrades: initial.winTrades,
-          lossTrades: initial.lossTrades,
-          winRate: initial.winRate,
-          totalProfit: initial.totalProfit,
-        }
-      : {
-          marketType: MarketType.SPOT,
-          timeframe: ResultsTimeframe.ONE_M,
-          totalTrades: 0,
-          winTrades: 0,
-          lossTrades: 0,
-          winRate: 0,
-          totalProfit: 0,
-        },
-  });
-
-  const mutation = useMutation({
-    mutationFn: (values: SummaryForm) =>
-      initial
-        ? api.resultsSummary.update(initial.marketType, initial.timeframe, values)
-        : api.resultsSummary.upsert(values),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['results-summary'] });
-      onDone();
-    },
-    onError: (err) => {
-      setError(err instanceof ApiError ? err.message : 'Save failed');
-    },
-  });
-
-  return (
-    <Card className="mb-6">
-      <form
-        onSubmit={handleSubmit((values) => {
-          setError(null);
-          mutation.mutate(values);
-        })}
-        className="grid gap-4 md:grid-cols-3"
-      >
-        <div>
-          <Label>Market</Label>
-          <Select {...register('marketType')} disabled={!!initial}>
-            {Object.values(MarketType).map((m) => (
-              <option key={m} value={m}>
-                {m}
-              </option>
-            ))}
-          </Select>
-        </div>
-        <div>
-          <Label>Timeframe</Label>
-          <Select {...register('timeframe')} disabled={!!initial}>
-            {Object.values(ResultsTimeframe).map((t) => (
-              <option key={t} value={t}>
-                {t}
-              </option>
-            ))}
-          </Select>
-        </div>
-        <div>
-          <Label>Total trades</Label>
-          <Input type="number" {...register('totalTrades')} />
-        </div>
-        <div>
-          <Label>Win trades</Label>
-          <Input type="number" {...register('winTrades')} />
-        </div>
-        <div>
-          <Label>Loss trades</Label>
-          <Input type="number" {...register('lossTrades')} />
-        </div>
-        <div>
-          <Label>Win rate</Label>
-          <Input type="number" step="any" {...register('winRate')} />
-        </div>
-        <div>
-          <Label>Total profit</Label>
-          <Input type="number" step="any" {...register('totalProfit')} />
-        </div>
-        <div className="flex items-end gap-2 md:col-span-3">
-          <Button type="submit" disabled={mutation.isPending}>
-            Save
-          </Button>
-          <Button type="button" variant="ghost" onClick={onDone}>
-            Cancel
-          </Button>
-        </div>
-        {error ? (
-          <div className="md:col-span-3">
-            <Alert>{error}</Alert>
-          </div>
-        ) : null}
-      </form>
-    </Card>
-  );
-}
-
-export default function ResultsSummaryPage() {
-  const queryClient = useQueryClient();
-  const [mode, setMode] = useState<'list' | 'create' | 'edit'>('list');
-  const [editing, setEditing] = useState<ResultsSummaryRow | null>(null);
-
-  const { data, isLoading } = useQuery({
-    queryKey: ['results-summary'],
-    queryFn: () => api.resultsSummary.list(),
+  const { data, isLoading, error, refetch } = useQuery({
+    queryKey: ['results', marketType, timeframe],
+    queryFn: () => api.results.get(marketType.toLowerCase(), timeframe),
   });
 
   const deleteMutation = useMutation({
-    mutationFn: ({ marketType, timeframe }: ResultsSummaryRow) =>
-      api.resultsSummary.delete(marketType, timeframe),
+    mutationFn: (id: string) => api.signals.delete(id),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['results-summary'] });
+      void queryClient.invalidateQueries({ queryKey: ['results'] });
+      void queryClient.invalidateQueries({ queryKey: ['signals'] });
     },
   });
+
+  const batchDeleteMutation = useMutation({
+    mutationFn: (ids: string[]) => api.signals.batchDelete(ids),
+    onSuccess: () => {
+      setSelected(new Set());
+      void queryClient.invalidateQueries({ queryKey: ['results'] });
+      void queryClient.invalidateQueries({ queryKey: ['signals'] });
+    },
+  });
+
+  const pageIds = useMemo(() => data?.signals.map((s) => s.id) ?? [], [data]);
+  const allOnPageSelected = pageIds.length > 0 && pageIds.every((id) => selected.has(id));
+
+  function toggleOne(id: string) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function toggleAllOnPage() {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (allOnPageSelected) {
+        for (const id of pageIds) next.delete(id);
+      } else {
+        for (const id of pageIds) next.add(id);
+      }
+      return next;
+    });
+  }
+
+  function confirmDelete(id: string, pair: string) {
+    if (confirm(`Delete closed signal ${pair}? It will be removed from results.`)) {
+      deleteMutation.mutate(id);
+    }
+  }
+
+  function confirmBatchDelete() {
+    const ids = [...selected];
+    if (ids.length === 0) return;
+    if (confirm(`Delete ${ids.length} selected signal(s)?`)) {
+      batchDeleteMutation.mutate(ids);
+    }
+  }
+
+  const summary = data?.summary;
 
   return (
     <div>
       <PageHeader
-        title="Results summary"
-        description="Manage aggregated results by market and timeframe"
+        title="Results"
+        description="Closed signals and computed summary (same as mobile /results)"
         actions={
-          <Button
-            onClick={() => {
-              setEditing(null);
-              setMode('create');
-            }}
-          >
-            Add summary
-          </Button>
+          selected.size > 0 ? (
+            <Button
+              variant="secondary"
+              onClick={confirmBatchDelete}
+              disabled={batchDeleteMutation.isPending}
+            >
+              Delete selected ({selected.size})
+            </Button>
+          ) : null
         }
       />
 
-      {mode !== 'list' ? (
-        <SummaryFormPanel
-          initial={mode === 'edit' ? editing ?? undefined : undefined}
-          onDone={() => setMode('list')}
-        />
-      ) : null}
+      <div className="mb-4 flex flex-wrap gap-3">
+        <Select
+          value={marketType}
+          onChange={(e) => {
+            setMarketType(e.target.value);
+            setSelected(new Set());
+          }}
+          className="w-40"
+        >
+          {Object.values(MarketType).map((m) => (
+            <option key={m} value={m}>
+              {m}
+            </option>
+          ))}
+        </Select>
+        <Select
+          value={timeframe}
+          onChange={(e) => {
+            setTimeframe(e.target.value);
+            setSelected(new Set());
+          }}
+          className="w-32"
+        >
+          {TIMEFRAMES.map((tf) => (
+            <option key={tf} value={tf}>
+              {tf}
+            </option>
+          ))}
+        </Select>
+        <Button variant="secondary" onClick={() => void refetch()}>
+          Refresh
+        </Button>
+      </div>
 
       {isLoading ? <Spinner /> : null}
+      {error ? <div className="text-red-400">Failed to load results</div> : null}
+
+      {summary ? (
+        <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+          <Card className="p-4">
+            <div className="text-sm text-zinc-400">Total trades</div>
+            <div className="text-2xl font-semibold">{summary.totalTrades}</div>
+          </Card>
+          <Card className="p-4">
+            <div className="text-sm text-zinc-400">Win trades</div>
+            <div className="text-2xl font-semibold">{summary.winTrades}</div>
+          </Card>
+          <Card className="p-4">
+            <div className="text-sm text-zinc-400">Loss trades</div>
+            <div className="text-2xl font-semibold">{summary.lossTrades}</div>
+          </Card>
+          <Card className="p-4">
+            <div className="text-sm text-zinc-400">Win rate</div>
+            <div className="text-2xl font-semibold">{summary.winRate}%</div>
+          </Card>
+          <Card className="p-4">
+            <div className="text-sm text-zinc-400">Total profit</div>
+            <div className="text-2xl font-semibold">{summary.totalProfit}%</div>
+          </Card>
+        </div>
+      ) : null}
 
       {data ? (
         <Table>
           <thead>
             <tr>
-              <Th>Market</Th>
-              <Th>Timeframe</Th>
-              <Th>Trades</Th>
-              <Th>Win rate</Th>
-              <Th>Profit</Th>
+              <Th>
+                <input
+                  type="checkbox"
+                  checked={allOnPageSelected}
+                  onChange={toggleAllOnPage}
+                  aria-label="Select all on page"
+                />
+              </Th>
+              <Th>Pair</Th>
+              <Th>Source</Th>
+              <Th>Close date</Th>
+              <Th>Profit %</Th>
+              <Th>PnL USDT</Th>
               <Th>Actions</Th>
             </tr>
           </thead>
           <tbody>
-            {data.map((row) => (
-              <tr key={`${row.marketType}-${row.timeframe}`}>
-                <Td>{row.marketType}</Td>
-                <Td>{row.timeframe}</Td>
-                <Td>{row.totalTrades}</Td>
-                <Td>{row.winRate}%</Td>
-                <Td>{row.totalProfit}</Td>
-                <Td className="space-x-2">
-                  <button
-                    type="button"
-                    className="text-indigo-400 hover:underline"
-                    onClick={() => {
-                      setEditing(row);
-                      setMode('edit');
-                    }}
-                  >
-                    Edit
-                  </button>
-                  <button
-                    type="button"
-                    className="text-red-400 hover:underline"
-                    onClick={() => {
-                      if (confirm('Delete this summary?')) {
-                        deleteMutation.mutate(row);
-                      }
-                    }}
-                  >
-                    Delete
-                  </button>
-                </Td>
+            {data.signals.length === 0 ? (
+              <tr>
+                <Td className="text-center text-zinc-400">No closed signals in this timeframe</Td>
               </tr>
-            ))}
+            ) : (
+              data.signals.map((signal) => (
+                <tr key={signal.id}>
+                  <Td>
+                    <input
+                      type="checkbox"
+                      checked={selected.has(signal.id)}
+                      onChange={() => toggleOne(signal.id)}
+                      aria-label={`Select ${signal.pair}`}
+                    />
+                  </Td>
+                  <Td>{signal.pair}</Td>
+                  <Td>{signal.source ?? '—'}</Td>
+                  <Td>
+                    {signal.closeDate ? new Date(signal.closeDate).toLocaleString() : '—'}
+                  </Td>
+                  <Td>{signal.profitPercentage ?? '—'}</Td>
+                  <Td>{signal.realizedPnlUsdt ?? '—'}</Td>
+                  <Td>
+                    <button
+                      type="button"
+                      className="text-red-400 hover:underline"
+                      onClick={() => confirmDelete(signal.id, signal.pair)}
+                      disabled={deleteMutation.isPending}
+                    >
+                      Delete
+                    </button>
+                  </Td>
+                </tr>
+              ))
+            )}
           </tbody>
         </Table>
       ) : null}

@@ -110,17 +110,17 @@ sequenceDiagram
 
 ## Results model
 
-- **Summary** — готовые значения из `ResultsSummary` (ключ `marketType + timeframe`). MVP: админ редактирует вручную.
-- **Список** — `Signal WHERE status=CLOSED`, фильтр по `marketType` + rolling window `closeDate` (timeframe 1W–1Y).
+- **Summary** — вычисляется из `CLOSED` сигналов в rolling window (`computeResultsSummary` в `@qpulse/shared`).
+- **Список** — `Signal WHERE status=CLOSED`, фильтр по `marketType` + `closeDate >= since` (timeframe 1W–1Y).
 
-Timeframe — **контекст Results**, не поле Signal.
+Timeframe — **контекст Results**, не поле Signal. Удаление CLOSED-сигнала в админке убирает его из summary и списка.
 
 ## NestJS API modules
 
 ```
 apps/api/src/
 ├── signals/           # CRUD (admin) + public read + event emit
-├── results/           # ResultsSummary + closed signals by closeDate
+├── results/           # GET /results — computed summary + closed signals
 ├── home-content/      # Market metrics, fear & greed, social links
 ├── settings/          # menu links + disclaimer, telegramFabUrl
 ├── reviews/           # POST review + admin moderation
@@ -146,8 +146,7 @@ apps/api/src/
 ## Backlog (не в текущей итерации)
 
 - Charts tab
-- ExternalSignalsAdapter
-- Auto-sync ResultsSummary при закрытии сигнала
+- ExternalSignalsAdapter (bb-trader integration via `/integrations/signals`)
 - Multi-admin / RBAC
 - BullMQ dead letter queue
 - E2E API tests

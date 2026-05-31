@@ -175,25 +175,19 @@ export const api = {
       }),
     delete: (id: string) =>
       apiFetch<{ ok: boolean }>(`/admin/signals/${id}`, { method: 'DELETE' }),
+    batchDelete: (ids: string[]) =>
+      apiFetch<{ ok: boolean; deleted: number }>('/admin/signals/batch-delete', {
+        method: 'POST',
+        body: JSON.stringify({ ids }),
+      }),
   },
 
-  resultsSummary: {
-    list: () => apiFetch<ResultsSummaryRow[]>('/admin/results-summary'),
-    upsert: (body: Record<string, unknown>) =>
-      apiFetch<ResultsSummaryRow>('/admin/results-summary', {
-        method: 'POST',
-        body: JSON.stringify(body),
-      }),
-    update: (marketType: string, timeframe: string, body: Record<string, unknown>) =>
-      apiFetch<ResultsSummaryRow>(
-        `/admin/results-summary/${marketType}/${timeframe}`,
-        { method: 'PATCH', body: JSON.stringify(body) },
-      ),
-    delete: (marketType: string, timeframe: string) =>
-      apiFetch<ResultsSummaryRow>(
-        `/admin/results-summary/${marketType}/${timeframe}`,
-        { method: 'DELETE' },
-      ),
+  results: {
+    get: (marketType: string, timeframe?: string) => {
+      const q = new URLSearchParams({ marketType });
+      if (timeframe) q.set('timeframe', timeframe);
+      return apiFetch<import('@qpulse/shared').ResultsResponse>(`/results?${q.toString()}`);
+    },
   },
 
   menuLinks: {
@@ -218,6 +212,13 @@ export const api = {
     list: () => apiFetch<ReviewRow[]>('/admin/reviews'),
     delete: (id: string) =>
       apiFetch<ReviewRow>(`/admin/reviews/${id}`, { method: 'DELETE' }),
+  },
+
+  clientErrors: {
+    list: (limit = 100) =>
+      apiFetch<import('@qpulse/shared').ClientErrorReportDto[]>(
+        `/admin/client-errors?limit=${limit}`,
+      ),
   },
 
   homeContent: {
@@ -249,16 +250,6 @@ export const api = {
   },
 };
 
-export interface ResultsSummaryRow {
-  marketType: string;
-  timeframe: string;
-  totalTrades: number;
-  winTrades: number;
-  lossTrades: number;
-  winRate: number;
-  totalProfit: number;
-  updatedAt: string;
-}
 
 export interface ReviewRow {
   id: string;

@@ -3,6 +3,7 @@ import { Prisma, SignalStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { mapSignal, normalizeSignalInput } from '../common/mappers/signal.mapper';
 import { applyDetailsExecutionFields } from '../common/utils/signal-details.util';
+import { applyTradeMetrics } from '../common/utils/signal-trade.util';
 import { parseLiveStatus, parseMarketType } from '../common/utils/query-params';
 import { SignalEventService } from '../events/signal-event.service';
 
@@ -46,7 +47,7 @@ export class SignalsService {
   }
 
   async create(data: Record<string, unknown>) {
-    const normalized = applyDetailsExecutionFields(data);
+    const normalized = applyTradeMetrics(applyDetailsExecutionFields(data));
     this.validateSignal(normalized);
     const created = await this.prisma.signal.create({
       data: this.toCreateInput(normalized),
@@ -58,7 +59,7 @@ export class SignalsService {
   async update(id: string, data: Record<string, unknown>) {
     const before = await this.prisma.signal.findUnique({ where: { id } });
     if (!before) throw new NotFoundException('Signal not found');
-    const normalized = applyDetailsExecutionFields({ ...before, ...data });
+    const normalized = applyTradeMetrics(applyDetailsExecutionFields({ ...before, ...data }));
     this.validateSignal(normalized);
     const after = await this.prisma.signal.update({
       where: { id },
@@ -74,6 +75,25 @@ export class SignalsService {
     await this.prisma.signal.delete({ where: { id } });
     await this.events.handleDelete(id, signal.marketType);
     return { ok: true };
+  }
+
+  async removeMany(ids: string[]) {
+    if (!Array.isArray(ids) || ids.length === 0) {
+      throw new BadRequestException('ids array is required');
+    }
+    if (ids.length > 100) {
+      throw new BadRequestException('Maximum 100 ids per batch');
+    }
+    const uniqueIds = [...new Set(ids.map((id) => String(id ?? '').trim()).filter(Boolean))];
+    const signals = await this.prisma.signal.findMany({ where: { id: { in: uniqueIds } } });
+    if (signals.length === 0) {
+      throw new NotFoundException('No signals found');
+    }
+    await this.prisma.signal.deleteMany({ where: { id: { in: signals.map((s) => s.id) } } });
+    for (const signal of signals) {
+      await this.events.handleDelete(signal.id, signal.marketType);
+    }
+    return { ok: true, deleted: signals.length };
   }
 
   async findByExternalId(externalId: string) {
@@ -132,6 +152,8 @@ export class SignalsService {
       liquidated: data.liquidated === true ? true : false,
       targetHitLabel: data.targetHitLabel as string,
       profitPercentage: data.profitPercentage as number,
+      positionSizeUsdt: data.positionSizeUsdt as number,
+      realizedPnlUsdt: data.realizedPnlUsdt as number,
       logoUrl: data.logoUrl as string,
       details: data.details as Prisma.InputJsonValue,
     };

@@ -78,11 +78,9 @@ Unified form for create/edit:
 - `closeDate` required when `CLOSED`
 - `liquidated` only when `CLOSED`
 
-## Results summary editor
+## Results
 
-Manual edit of `ResultsSummary` rows. Key: `(marketType, timeframe)`.
-
-Auto-sync on signal close — backlog.
+Read-only view of `GET /results`: filters (market, timeframe), computed summary cards, table of CLOSED signals. Row/batch delete removes signals (same as `/signals`).
 
 ## Env
 

@@ -36,6 +36,8 @@ import { HealthModule } from './health/health.module';
 
 import { IntegrationsModule } from './integrations/integrations.module';
 
+import { ClientErrorsModule } from './client-errors/client-errors.module';
+
 
 
 @Module({
@@ -81,6 +83,8 @@ import { IntegrationsModule } from './integrations/integrations.module';
     AdminModule,
 
     IntegrationsModule,
+
+    ClientErrorsModule,
 
     HealthModule,
 

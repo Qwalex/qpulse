@@ -86,6 +86,8 @@ export interface SignalDto {
   liquidated: boolean;
   targetHitLabel?: string | null;
   profitPercentage?: number | null;
+  positionSizeUsdt?: number | null;
+  realizedPnlUsdt?: number | null;
   logoUrl?: string | null;
   details?: SignalDetails | null;
   createdAt: string;
@@ -222,3 +224,8 @@ export {
   hasNewTargetHit,
 } from './signal-details';
 export type { SignalDetailsShape, SignalTargetShape } from './signal-details';
+export { ClientErrorKind } from './client-errors.types';
+export type { ClientErrorCreateDto, ClientErrorReportDto } from './client-errors.types';
+export { computeProfitPercentage } from './signal-profit.util';
+export { computeResultsSummary } from './results-summary.util';
+export type { ResultsSummarySignalInput } from './results-summary.util';

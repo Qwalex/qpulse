@@ -47,6 +47,14 @@ enum MenuActionType {
   INTERNAL_ROUTE
 }
 
+enum ClientErrorKind {
+  RENDER
+  QUERY
+  MUTATION
+  NETWORK
+  JSON
+}
+
 model Signal {
   id                String       @id @default(uuid())
   /// Id сигнала во внешней системе (signalsBot Signal.id).
@@ -67,24 +75,13 @@ model Signal {
   liquidated        Boolean      @default(false)
   targetHitLabel    String?
   profitPercentage  Float?
+  positionSizeUsdt  Float?
+  realizedPnlUsdt   Float?
   logoUrl           String?
   details           Json?
   createdAt         DateTime     @default(now())
   updatedAt         DateTime     @updatedAt
   events            SignalEventLog[]
-}
-
-model ResultsSummary {
-  marketType  MarketType
-  timeframe   ResultsTimeframe
-  totalTrades Int
-  winTrades   Int
-  lossTrades  Int
-  winRate     Float
-  totalProfit Float
-  updatedAt   DateTime         @updatedAt
-
-  @@id([marketType, timeframe])
 }
 
 model SignalEventLog {
@@ -172,4 +169,20 @@ model AdminUser {
   passwordHash     String
   refreshTokenHash String?
   createdAt        DateTime @default(now())
+}
+
+model ClientErrorReport {
+  id         String          @id @default(uuid())
+  kind       ClientErrorKind
+  message    String
+  stack      String?
+  screen     String?
+  apiPath    String?
+  deviceId   String?
+  platform   String?
+  appVersion String?
+  createdAt  DateTime        @default(now())
+
+  @@index([createdAt])
+  @@index([kind, createdAt])
 }

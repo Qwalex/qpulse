@@ -2,7 +2,6 @@ import {
   PrismaClient,
   MarketType,
   SignalStatus,
-  ResultsTimeframe,
   SignalEventType,
   MenuActionType,
 } from '@prisma/client';
@@ -79,24 +78,6 @@ async function main() {
       create: { ...t, priority: 'high', deepLink: '/signals/{{id}}' },
       update: t,
     });
-  }
-
-  for (const marketType of [MarketType.SPOT, MarketType.FUTURES]) {
-    for (const timeframe of Object.values(ResultsTimeframe)) {
-      await prisma.resultsSummary.upsert({
-        where: { marketType_timeframe: { marketType, timeframe } },
-        create: {
-          marketType,
-          timeframe,
-          totalTrades: 27,
-          winTrades: 23,
-          lossTrades: 4,
-          winRate: 85,
-          totalProfit: 567.1,
-        },
-        update: {},
-      });
-    }
   }
 
   await prisma.signal.deleteMany();

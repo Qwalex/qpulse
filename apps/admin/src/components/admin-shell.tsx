@@ -11,6 +11,7 @@ const navItems = [
   { href: '/results-summary', label: 'Results' },
   { href: '/menu-links', label: 'Menu Links' },
   { href: '/reviews', label: 'Reviews' },
+  { href: '/client-errors', label: 'Client errors' },
   { href: '/home-content', label: 'Home Content' },
   { href: '/settings', label: 'Settings' },
   { href: '/notifications', label: 'Notifications' },
