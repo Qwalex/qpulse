@@ -113,6 +113,12 @@ export interface HomeContentDto {
   fearGreedValue: number;
   fearGreedLabel: string;
   socialLinks: Array<{ id: string; label: string; url: string; icon: string }>;
+  /** @deprecated Legacy mobile builds — mapped from market metrics for backward compatibility. */
+  btcPrice?: number;
+  btcChange24h?: number;
+  btcMarketCap?: string;
+  btcVolume?: string;
+  ticker?: Array<{ pair: string; price: number; change: number }>;
 }
 
 export interface AppSettingsDto {

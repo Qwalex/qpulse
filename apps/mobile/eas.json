@@ -13,12 +13,20 @@
     },
     "preview": {
       "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://qpulse-api-production.up.railway.app",
+        "EXPO_PUBLIC_WS_URL": "https://qpulse-api-production.up.railway.app"
+      },
       "android": {
         "buildType": "apk"
       }
     },
     "production": {
       "autoIncrement": true,
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://qpulse-api-production.up.railway.app",
+        "EXPO_PUBLIC_WS_URL": "https://qpulse-api-production.up.railway.app"
+      },
       "android": {
         "buildType": "app-bundle"
       }

@@ -22,9 +22,16 @@ GET /home-content
   "altcoinSeasonLabel": "Bitcoin Season",
   "fearGreedValue": 72,
   "fearGreedLabel": "Greed",
-  "socialLinks": [{ "id": "telegram", "label": "Telegram", "url": "https://t.me/...", "icon": "telegram" }]
+  "socialLinks": [{ "id": "telegram", "label": "Telegram", "url": "https://t.me/...", "icon": "telegram" }],
+  "btcPrice": 0,
+  "btcChange24h": 1.8,
+  "btcMarketCap": "$2.84T",
+  "btcVolume": "—",
+  "ticker": []
 }
 ```
+
+Legacy `btc*` / `ticker` fields are kept for older mobile builds; new clients should use `totalMarketCap*` and `altcoinSeason*`.
 
 ### Signals
 

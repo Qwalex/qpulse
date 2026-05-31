@@ -87,6 +87,7 @@ export function SignalCard({ signal }: SignalCardProps) {
         <View style={[styles.details, { borderTopColor: themeColors.cardBorder }]}>
           {signal.details.targets.map((tp) => {
             const reached = tp.hit === true;
+            const profitPercent = Number(tp.profitPercent ?? 0);
             return (
               <View key={tp.label} style={styles.row}>
                 <Text style={[styles.label, { color: themeColors.textSecondary }, !reached && styles.labelMuted]}>
@@ -100,8 +101,8 @@ export function SignalCard({ signal }: SignalCardProps) {
                   ]}
                 >
                   {reached ? '✓ ' : ''}
-                  {formatPrice(tp.price)} ({tp.profitPercent > 0 ? '+' : ''}
-                  {tp.profitPercent}%)
+                  {formatPrice(tp.price)} ({profitPercent > 0 ? '+' : ''}
+                  {profitPercent}%)
                 </Text>
               </View>
             );

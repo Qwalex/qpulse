@@ -54,7 +54,9 @@ export default function HomeScreen() {
   }
 
   if (homeQuery.isError) {
-    return <QueryErrorView onRetry={() => homeQuery.refetch()} />;
+    const message =
+      homeQuery.error instanceof Error ? homeQuery.error.message : 'Failed to load home content';
+    return <QueryErrorView message={message} onRetry={() => homeQuery.refetch()} />;
   }
 
   const home = homeQuery.data!;

@@ -71,11 +71,11 @@ function IndexGauge({
 
 export function MarketMetricsSection({ home }: MarketMetricsSectionProps) {
   const themeColors = useAppStore((s) => s.colors);
-  const change = home.totalMarketCapChange24h;
+  const change = Number(home.totalMarketCapChange24h ?? 0);
   const changePositive = change >= 0;
   const changeColor = changePositive ? themeColors.success : themeColors.danger;
-  const fgColor = fearGreedColor(home.fearGreedValue);
-  const asColor = altcoinSeasonColor(home.altcoinSeasonIndex);
+  const fgColor = fearGreedColor(Number(home.fearGreedValue ?? 0));
+  const asColor = altcoinSeasonColor(Number(home.altcoinSeasonIndex ?? 0));
 
   return (
     <View style={styles.section}>
@@ -112,15 +112,15 @@ export function MarketMetricsSection({ home }: MarketMetricsSectionProps) {
       <View style={styles.gaugeRow}>
         <IndexGauge
           label="Altcoin Season"
-          value={home.altcoinSeasonIndex}
-          subtitle={home.altcoinSeasonLabel}
+          value={Number(home.altcoinSeasonIndex ?? 0)}
+          subtitle={home.altcoinSeasonLabel ?? '—'}
           color={asColor}
           icon="layers-outline"
         />
         <IndexGauge
           label="Fear & Greed"
-          value={home.fearGreedValue}
-          subtitle={home.fearGreedLabel}
+          value={Number(home.fearGreedValue ?? 0)}
+          subtitle={home.fearGreedLabel ?? '—'}
           color={fgColor}
           icon="pulse-outline"
         />
