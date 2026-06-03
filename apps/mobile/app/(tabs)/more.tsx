@@ -10,6 +10,7 @@ import { useDeviceReview } from '@/hooks/useDeviceReview';
 import { SettingsMenuList } from '@/components/SettingsMenuList';
 
 import { QueryErrorView } from '@/components/QueryErrorView';
+import { TabScreen } from '@/components/TabScreen';
 
 import { useAppStore } from '@/store/useAppStore';
 
@@ -34,32 +35,6 @@ export default function MoreScreen() {
 
   });
 
-
-
-  if (menuQuery.isLoading) {
-
-    return (
-
-      <View style={[styles.center, { backgroundColor: themeColors.background }]}>
-
-        <ActivityIndicator color={themeColors.accent} size="large" />
-
-      </View>
-
-    );
-
-  }
-
-
-
-  if (menuQuery.isError) {
-    const message =
-      menuQuery.error instanceof Error ? menuQuery.error.message : 'Failed to load menu';
-    return <QueryErrorView message={message} onRetry={() => menuQuery.refetch()} />;
-  }
-
-
-
   const menuItems = useMemo((): MenuLinkDto[] => {
     const items = menuQuery.data ?? [];
     return items.flatMap((item) => {
@@ -76,9 +51,37 @@ export default function MoreScreen() {
     });
   }, [menuQuery.data, reviewReady, hasReview]);
 
+  if (menuQuery.isLoading) {
+
+    return (
+
+      <TabScreen style={{ backgroundColor: themeColors.background }}>
+
+        <View style={styles.center}>
+
+        <ActivityIndicator color={themeColors.accent} size="large" />
+
+        </View>
+
+      </TabScreen>
+
+    );
+
+  }
+
+
+
+  if (menuQuery.isError) {
+    const message =
+      menuQuery.error instanceof Error ? menuQuery.error.message : 'Failed to load menu';
+    return <QueryErrorView message={message} onRetry={() => menuQuery.refetch()} />;
+  }
+
   return (
 
-    <ScrollView style={[styles.container, { backgroundColor: themeColors.background }]} contentContainerStyle={styles.content}>
+    <TabScreen style={{ backgroundColor: themeColors.background }}>
+
+    <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
 
       <View style={[styles.darkModeRow, { backgroundColor: themeColors.card, borderColor: themeColors.cardBorder }]}>
 
@@ -142,6 +145,8 @@ export default function MoreScreen() {
 
     </ScrollView>
 
+    </TabScreen>
+
   );
 
 }
@@ -150,7 +155,7 @@ export default function MoreScreen() {
 
 const styles = StyleSheet.create({
 
-  container: {
+  scroll: {
 
     flex: 1,
 

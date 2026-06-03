@@ -13,6 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { MarketType } from '@qpulse/shared';
 import { fetchHomeContent, fetchResults, fetchSettings } from '@/lib/api';
 import { RiskBanner } from '@/components/RiskBanner';
+import { TabScreen } from '@/components/TabScreen';
 import { TelegramFab } from '@/components/TelegramFab';
 import { QueryErrorView } from '@/components/QueryErrorView';
 import { MarketMetricsSection } from '@/components/MarketMetricsSection';
@@ -47,9 +48,11 @@ export default function HomeScreen() {
 
   if (isLoading) {
     return (
-      <View style={[styles.center, { backgroundColor: themeColors.background }]}>
-        <ActivityIndicator color={themeColors.accent} size="large" />
-      </View>
+      <TabScreen style={{ backgroundColor: themeColors.background }}>
+        <View style={styles.center}>
+          <ActivityIndicator color={themeColors.accent} size="large" />
+        </View>
+      </TabScreen>
     );
   }
 
@@ -63,8 +66,9 @@ export default function HomeScreen() {
   const settings = settingsQuery.data;
 
   return (
-    <View style={[styles.container, { backgroundColor: themeColors.background }]}>
+    <TabScreen style={{ backgroundColor: themeColors.background }}>
       <ScrollView
+        style={styles.scroll}
         contentContainerStyle={styles.content}
         refreshControl={
           <RefreshControl
@@ -103,12 +107,12 @@ export default function HomeScreen() {
       </ScrollView>
 
       <TelegramFab url={settings?.telegramFabUrl} />
-    </View>
+    </TabScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  scroll: {
     flex: 1,
   },
   center: {

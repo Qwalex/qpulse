@@ -181,6 +181,9 @@ importers:
 
   apps/mobile:
     dependencies:
+      '@expo/metro-runtime':
+        specifier: ~55.0.0
+        version: 55.0.11(@expo/dom-webview@55.0.6)(expo@55.0.26)(react-dom@19.2.6(react@19.2.0))(react-native@0.83.2(@babel/core@7.29.0)(@types/react@19.2.15)(react@19.2.0))(react@19.2.0)
       '@expo/vector-icons':
         specifier: ^15.0.0
         version: 15.1.1(expo-font@55.0.8)(react-native@0.83.2(@babel/core@7.29.0)(@types/react@19.2.15)(react@19.2.0))(react@19.2.0)
@@ -226,6 +229,9 @@ importers:
       socket.io-client:
         specifier: ^4.8.1
         version: 4.8.3
+      whatwg-fetch:
+        specifier: ^3.6.20
+        version: 3.6.20
       zustand:
         specifier: ^5.0.5
         version: 5.0.13(@types/react@19.2.15)(react@19.2.0)(use-sync-external-store@1.6.0(react@19.2.0))

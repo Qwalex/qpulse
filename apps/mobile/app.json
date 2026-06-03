@@ -46,8 +46,9 @@
         "origin": false
       },
       "eas": {
-        "projectId": "c8f3a1b2-4d5e-6f78-9abc-def012345678"
+        "projectId": "e82777cb-fcb5-478a-af31-07a130ac7780"
       }
-    }
+    },
+    "owner": "qwazik"
   }
 }

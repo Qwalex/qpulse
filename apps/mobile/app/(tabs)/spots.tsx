@@ -29,6 +29,7 @@ import { SignalCard } from '@/components/SignalCard';
 import { TelegramFab } from '@/components/TelegramFab';
 
 import { QueryErrorView } from '@/components/QueryErrorView';
+import { TabScreen } from '@/components/TabScreen';
 
 import { useAppStore } from '@/store/useAppStore';
 
@@ -70,11 +71,15 @@ export default function SpotsScreen() {
 
     return (
 
-      <View style={[styles.center, { backgroundColor: themeColors.background }]}>
+      <TabScreen style={{ backgroundColor: themeColors.background }}>
+
+        <View style={styles.center}>
 
         <ActivityIndicator color={themeColors.accent} size="large" />
 
-      </View>
+        </View>
+
+      </TabScreen>
 
     );
 
@@ -92,7 +97,7 @@ export default function SpotsScreen() {
 
   return (
 
-    <View style={[styles.container, { backgroundColor: themeColors.background }]}>
+    <TabScreen style={{ backgroundColor: themeColors.background }}>
 
       <View style={styles.header}>
 
@@ -144,7 +149,7 @@ export default function SpotsScreen() {
 
       <TelegramFab url={settingsQuery.data?.telegramFabUrl} />
 
-    </View>
+    </TabScreen>
 
   );
 

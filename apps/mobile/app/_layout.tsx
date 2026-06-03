@@ -10,6 +10,8 @@ import { StatusBar } from 'expo-status-bar';
 
 import * as Notifications from 'expo-notifications';
 
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+
 import { AppErrorBoundary } from '@/components/AppErrorBoundary';
 
 import { useSignalRealtime } from '@/hooks/useSignalRealtime';
@@ -188,6 +190,8 @@ export default function RootLayout() {
 
     <AppErrorBoundary screen="root">
 
+      <SafeAreaProvider>
+
       <QueryClientProvider client={queryClient}>
 
         <ThemeProvider>
@@ -223,6 +227,8 @@ export default function RootLayout() {
         </ThemeProvider>
 
       </QueryClientProvider>
+
+      </SafeAreaProvider>
 
     </AppErrorBoundary>
 
