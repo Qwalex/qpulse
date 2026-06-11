@@ -15,7 +15,9 @@ import {
   scaleBtcMarketCapChart,
 } from './market-metrics.mapper';
 
-const CACHE_KEY = 'qpulse:market-metrics:v6';
+const CACHE_KEY = 'qpulse:market-metrics:v7';
+const CMC_PRO_BASE = 'https://pro-api.coinmarketcap.com/v1';
+const CMC_TRIAL_BASE = 'https://pro-api.coinmarketcap.com/trial-pro-api/v1';
 const CACHE_TTL_SEC = 600;
 const STALE_TTL_SEC = 86_400;
 const COINGECKO_PUBLIC_BASE = 'https://api.coingecko.com/api/v3';
@@ -77,6 +79,12 @@ interface CoinGeckoMarketChartResponse {
   prices?: Array<[number, number]>;
 }
 
+interface CmcAltcoinSeasonResponse {
+  data?: {
+    altcoin_index?: number;
+  };
+}
+
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -91,6 +99,7 @@ export class MarketMetricsService implements OnModuleDestroy {
   private readonly chartBatchSize: number;
   private readonly chartBatchDelayMs: number;
   private readonly coingeckoRequestDelayMs: number;
+  private readonly cmcApiKey?: string;
 
   constructor(
     private readonly prisma: PrismaService,
@@ -116,6 +125,12 @@ export class MarketMetricsService implements OnModuleDestroy {
     } else {
       this.coingeckoBase = COINGECKO_PUBLIC_BASE;
       this.logger.warn('COINGECKO_API_KEY not set — using public rate limits');
+    }
+
+    const cmcKey = config.get<string>('CMC_API_KEY')?.trim();
+    if (cmcKey) {
+      this.cmcApiKey = cmcKey;
+      this.logger.log('CoinMarketCap API key configured');
     }
 
     const authenticated = Boolean(this.coingeckoApiKey);
@@ -248,10 +263,48 @@ export class MarketMetricsService implements OnModuleDestroy {
     };
   }
 
+  private async fetchCmcAltcoinSeason(): Promise<number> {
+    const base = this.cmcApiKey ? CMC_PRO_BASE : CMC_TRIAL_BASE;
+    const headers: Record<string, string> = {};
+    if (this.cmcApiKey) {
+      headers['X-CMC_PRO_API_KEY'] = this.cmcApiKey;
+    }
+    const json = await this.fetchJson<CmcAltcoinSeasonResponse>(
+      `${base}/altcoin-season-index/latest`,
+      'CMC altcoin season',
+      headers,
+    );
+    const index = json.data?.altcoin_index;
+    if (index == null || !Number.isFinite(index)) {
+      throw new Error('CMC altcoin_index missing');
+    }
+    return Math.max(0, Math.min(100, Math.round(index)));
+  }
+
   private async resolveAltcoinSeason(
-    markets: CoinGeckoMarketRow[],
+    markets: CoinGeckoMarketRow[] | undefined,
     previous: MarketMetricsDto | null,
   ): Promise<{ index: number; label: string }> {
+    try {
+      const index = await this.fetchCmcAltcoinSeason();
+      const label = altcoinSeasonLabel(index);
+      return { index, label: `${label} · CMC` };
+    } catch (errorCmc) {
+      this.logger.warn(
+        `CMC altcoin season failed: ${errorCmc instanceof Error ? errorCmc.message : String(errorCmc)}`,
+      );
+    }
+
+    if (!markets) {
+      if (previous) {
+        return {
+          index: previous.altcoinSeasonIndex,
+          label: previous.altcoinSeasonLabel,
+        };
+      }
+      throw new Error('Altcoin season unavailable');
+    }
+
     try {
       const result90d = await this.computeAltcoinSeasonIndex90d(markets);
       const label = altcoinSeasonLabel(result90d.index);
@@ -356,16 +409,14 @@ export class MarketMetricsService implements OnModuleDestroy {
     let altcoinSeasonIndex = previous?.altcoinSeasonIndex;
     let altcoinSeasonLabelText = previous?.altcoinSeasonLabel;
 
-    if (marketsJson) {
-      try {
-        const altcoin = await this.resolveAltcoinSeason(marketsJson, previous);
-        altcoinSeasonIndex = altcoin.index;
-        altcoinSeasonLabelText = altcoin.label;
-      } catch (error) {
-        this.logger.warn(
-          `Altcoin season unresolved: ${error instanceof Error ? error.message : String(error)}`,
-        );
-      }
+    try {
+      const altcoin = await this.resolveAltcoinSeason(marketsJson, previous);
+      altcoinSeasonIndex = altcoin.index;
+      altcoinSeasonLabelText = altcoin.label;
+    } catch (error) {
+      this.logger.warn(
+        `Altcoin season unresolved: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
 
     if (marketCapUsd != null) {

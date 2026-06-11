@@ -45,6 +45,7 @@ REDIS_URL=${{Redis.REDIS_URL}}
 JWT_SECRET=<openssl rand -hex 32>
 INTEGRATIONS_API_KEY=<openssl rand -hex 32>
 COINGECKO_API_KEY=<demo key from CoinGecko developer dashboard>
+CMC_API_KEY=<free Basic key from CoinMarketCap developer dashboard>
 ADMIN_URL=https://<admin-domain>.up.railway.app
 NODE_ENV=production
 EXPO_ACCESS_TOKEN=<optional>

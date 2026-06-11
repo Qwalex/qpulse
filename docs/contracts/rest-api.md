@@ -66,7 +66,7 @@ GET /market-metrics
 - `totalVolume24h` — global 24h trading volume (CoinGecko global)
 - `btcPrice` / `btcChange24h` — Bitcoin spot price and 24h % change
 - `marketCapChart24h` — ~48 points over last 24h; shape from CoinGecko BTC market cap scaled to current total market cap (global chart endpoint is Pro-only)
-- `altcoinSeasonIndex` — % of top-50 alts (excl. stables/wrapped) outperforming BTC over **90 days** (CoinGecko daily charts)
+- `altcoinSeasonIndex` — [CMC Altcoin Season Index](https://coinmarketcap.com/charts/altcoin-season-index/) via `CMC_API_KEY` (`GET /v1/altcoin-season-index/latest`); fallback: CoinGecko 90d/30d proxy
 - Redis cache TTL ~10 min; fallback to stale cache or admin `HomeContent` on provider errors
 
 ### Signals
