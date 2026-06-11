@@ -211,6 +211,31 @@ interface DeviceRegisterDto {
 }
 ```
 
+### DeviceNotificationPreferencesDto
+
+Per-device push filters (defaults all `true`). See `shouldDeliverSignalPush` / `shouldDeliverPriceAlertPush` in `@qpulse/shared`.
+
+```typescript
+interface DeviceNotificationPreferencesDto {
+  deviceId: string;
+  signalsNew: boolean;
+  signalsTp: boolean;
+  signalsSl: boolean;
+  signalsLiquidation: boolean;
+  signalsClosed: boolean;
+  signalsUpdates: boolean;
+  priceAlerts: boolean;
+  spotEnabled: boolean;
+  futuresEnabled: boolean;
+}
+
+interface DeviceNotificationPreferencesUpdateDto {
+  deviceId: string;
+  signalsNew?: boolean;
+  // ...same fields, all optional except deviceId
+}
+```
+
 ### AdminUserDto / AuthLoginResponse
 
 ```typescript

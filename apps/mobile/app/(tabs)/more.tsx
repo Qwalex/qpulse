@@ -18,6 +18,7 @@ import { fetchMenuLinks } from '@/lib/api';
 import { useDeviceReview } from '@/hooks/useDeviceReview';
 
 import { SettingsMenuList } from '@/components/SettingsMenuList';
+import { NotificationPreferencesSection } from '@/components/NotificationPreferencesSection';
 
 import { QueryErrorView } from '@/components/QueryErrorView';
 import { TabScreen } from '@/components/TabScreen';
@@ -133,6 +134,8 @@ export default function MoreScreen() {
           />
         )}
       </View>
+
+      <NotificationPreferencesSection masterEnabled={notificationsEnabled && notificationsHydrated} />
 
       <View style={[styles.settingsRow, { backgroundColor: themeColors.card, borderColor: themeColors.cardBorder }]}>
         <Text style={[styles.settingsLabel, { color: themeColors.text }]}>Dark Mode</Text>

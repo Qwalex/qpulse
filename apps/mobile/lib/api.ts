@@ -1,5 +1,7 @@
 import type {
   AppSettingsDto,
+  DeviceNotificationPreferencesDto,
+  DeviceNotificationPreferencesUpdateDto,
   DeviceRegisterDto,
   HomeContentDto,
   MarketMetricsDto,
@@ -177,6 +179,21 @@ export function unregisterDevice(pushToken: string): Promise<void> {
   return request<void>('/devices/unregister', {
     method: 'DELETE',
     body: JSON.stringify({ pushToken }),
+  });
+}
+
+export function fetchNotificationPreferences(deviceId: string): Promise<DeviceNotificationPreferencesDto> {
+  const q = new URLSearchParams({ deviceId });
+  return request<DeviceNotificationPreferencesDto>(`/devices/notification-preferences?${q.toString()}`);
+}
+
+export function updateNotificationPreferences(
+  deviceId: string,
+  updates: Omit<DeviceNotificationPreferencesUpdateDto, 'deviceId'>,
+): Promise<DeviceNotificationPreferencesDto> {
+  return request<DeviceNotificationPreferencesDto>('/devices/notification-preferences', {
+    method: 'PATCH',
+    body: JSON.stringify({ deviceId, ...updates }),
   });
 }
 

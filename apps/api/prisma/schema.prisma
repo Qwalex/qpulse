@@ -114,6 +114,21 @@ model DeviceToken {
   updatedAt DateTime @updatedAt
 }
 
+model DeviceNotificationPreferences {
+  deviceId           String   @id
+  signalsNew         Boolean  @default(true)
+  signalsTp          Boolean  @default(true)
+  signalsSl          Boolean  @default(true)
+  signalsLiquidation Boolean  @default(true)
+  signalsClosed      Boolean  @default(true)
+  signalsUpdates     Boolean  @default(true)
+  priceAlerts        Boolean  @default(true)
+  spotEnabled        Boolean  @default(true)
+  futuresEnabled     Boolean  @default(true)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}
+
 model NotificationLog {
   id        String          @id @default(uuid())
   deviceId  String?

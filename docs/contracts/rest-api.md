@@ -174,8 +174,10 @@ Mobile sends errors from `request()` failures and `AppErrorBoundary` (render cra
 ### Devices (push tokens)
 
 ```
-POST /devices/register
+POST  /devices/register
 DELETE /devices/unregister
+GET   /devices/notification-preferences?deviceId=<device-id>
+PATCH /devices/notification-preferences
 ```
 
 **POST body:**
@@ -189,6 +191,39 @@ DELETE /devices/unregister
 ```json
 { "pushToken": "ExponentPushToken[...]" }
 ```
+
+**GET notification preferences** — returns defaults (all `true`) when no row exists for `deviceId`.
+
+**PATCH body** — partial update; at least one boolean field besides `deviceId`:
+
+```json
+{
+  "deviceId": "uuid",
+  "signalsNew": true,
+  "signalsTp": true,
+  "signalsSl": true,
+  "signalsLiquidation": true,
+  "signalsClosed": true,
+  "signalsUpdates": true,
+  "priceAlerts": true,
+  "spotEnabled": true,
+  "futuresEnabled": true
+}
+```
+
+| Field | Filters |
+|-------|---------|
+| `signalsNew` | `SIGNAL_CREATED` |
+| `signalsTp` | `TP_HIT` |
+| `signalsSl` | `SL_HIT` |
+| `signalsLiquidation` | `LIQUIDATED` |
+| `signalsClosed` | `SIGNAL_CLOSED` |
+| `signalsUpdates` | `SIGNAL_UPDATED`, `SIGNAL_CANCELLED` |
+| `priceAlerts` | Watch price alerts + entry hits |
+| `spotEnabled` | Signal pushes where `marketType=SPOT` |
+| `futuresEnabled` | Signal pushes where `marketType=FUTURES` |
+
+PushWorker and `PriceAlertPushService` skip delivery when disabled (`NotificationLog` / `PriceAlertLog` status `skipped`, error `preference_disabled`).
 
 > Единственный способ регистрации push token. WS не используется для tokens.
 

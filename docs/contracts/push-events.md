@@ -115,6 +115,18 @@ Logged in `PriceAlertLog` (`sent` / `failed` / `skipped`).
 
 Conditions: `ABOVE`, `BELOW`, `AT` (entry uses `AT` with 0.05% tolerance).
 
+## Device notification preferences
+
+Per-`deviceId` booleans in `DeviceNotificationPreferences` (defaults all `true`).
+
+Mobile: **More → Notification types** (visible when master Notifications toggle is on).
+
+REST: `GET/PATCH /devices/notification-preferences` — see [rest-api.md](./rest-api.md).
+
+Filtering helpers in `@qpulse/shared`: `shouldDeliverSignalPush`, `shouldDeliverPriceAlertPush`.
+
+Skipped sends log `status=skipped`, `error=preference_disabled`.
+
 ## Adding a new event type
 
 See runbook: [add-signal-event.md](../runbooks/add-signal-event.md).

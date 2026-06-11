@@ -274,3 +274,14 @@ export type {
   CreateEntryAlertFromSignalDto,
 } from './price-watch.types';
 export { pairToBybitSymbol, bybitSymbolToPairLabel } from './pair-symbol.util';
+export type {
+  DeviceNotificationPreferencesDto,
+  DeviceNotificationPreferencesUpdateDto,
+  DeviceNotificationPreferenceKey,
+} from './notification-preferences.types';
+export {
+  DEFAULT_DEVICE_NOTIFICATION_PREFERENCES,
+  mergeNotificationPreferences,
+  shouldDeliverSignalPush,
+  shouldDeliverPriceAlertPush,
+} from './notification-preferences.util';

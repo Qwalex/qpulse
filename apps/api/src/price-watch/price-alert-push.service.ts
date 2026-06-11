@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import Expo, { ExpoPushMessage } from 'expo-server-sdk';
+import { mergeNotificationPreferences, shouldDeliverPriceAlertPush } from '@qpulse/shared';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
@@ -20,6 +21,36 @@ export class PriceAlertPushService {
     deepLink: string;
     pairLabel: string;
   }): Promise<void> {
+    const prefsRow = await this.prisma.deviceNotificationPreferences.findUnique({
+      where: { deviceId: params.deviceId },
+    });
+    const prefs = prefsRow
+      ? {
+          deviceId: prefsRow.deviceId,
+          signalsNew: prefsRow.signalsNew,
+          signalsTp: prefsRow.signalsTp,
+          signalsSl: prefsRow.signalsSl,
+          signalsLiquidation: prefsRow.signalsLiquidation,
+          signalsClosed: prefsRow.signalsClosed,
+          signalsUpdates: prefsRow.signalsUpdates,
+          priceAlerts: prefsRow.priceAlerts,
+          spotEnabled: prefsRow.spotEnabled,
+          futuresEnabled: prefsRow.futuresEnabled,
+        }
+      : mergeNotificationPreferences(params.deviceId);
+
+    if (!shouldDeliverPriceAlertPush(prefs)) {
+      await this.writeLog(
+        params.deviceId,
+        params.alertId,
+        params.title,
+        params.body,
+        'skipped',
+        'preference_disabled',
+      );
+      return;
+    }
+
     const tokens = await this.prisma.deviceToken.findMany({
       where: { deviceId: params.deviceId, isActive: true },
     });

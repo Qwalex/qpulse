@@ -3,6 +3,11 @@ import { Logger } from '@nestjs/common';
 import { Job } from 'bullmq';
 import Expo, { ExpoPushMessage, ExpoPushTicket } from 'expo-server-sdk';
 import { SignalEventType } from '@prisma/client';
+import {
+  DeviceNotificationPreferencesDto,
+  mergeNotificationPreferences,
+  shouldDeliverSignalPush,
+} from '@qpulse/shared';
 import { PrismaService } from '../prisma/prisma.service';
 
 const PUSH_BACKOFF_DELAYS = [5000, 30000, 120000];
@@ -37,6 +42,8 @@ export class PushProcessor extends WorkerHost {
 
     if (tokens.length === 0) return;
 
+    const prefsByDevice = await this.loadPreferencesMap();
+
     if (!this.expo) {
       for (const token of tokens) {
         await this.writeLog(token.deviceId, eventType, title, body, 'skipped');
@@ -48,6 +55,19 @@ export class PushProcessor extends WorkerHost {
     const tokenByPushToken = new Map<string, (typeof tokens)[number]>();
 
     for (const token of tokens) {
+      const prefs = this.resolvePreferences(token.deviceId, prefsByDevice);
+      if (!shouldDeliverSignalPush(prefs, eventType, payload.marketType)) {
+        await this.writeLog(
+          token.deviceId,
+          eventType,
+          title,
+          body,
+          'skipped',
+          'preference_disabled',
+        );
+        continue;
+      }
+
       if (!Expo.isExpoPushToken(token.pushToken)) {
         await this.writeLog(token.deviceId, eventType, title, body, 'failed', 'Invalid Expo push token');
         await this.deactivateToken(token.pushToken);
@@ -103,6 +123,47 @@ export class PushProcessor extends WorkerHost {
         }
       }
     }
+  }
+
+  private async loadPreferencesMap(): Promise<Map<string, DeviceNotificationPreferencesDto>> {
+    const rows = await this.prisma.deviceNotificationPreferences.findMany();
+    return new Map(rows.map((row) => [row.deviceId, this.toPreferencesDto(row)]));
+  }
+
+  private resolvePreferences(
+    deviceId: string | null | undefined,
+    prefsByDevice: Map<string, DeviceNotificationPreferencesDto>,
+  ): DeviceNotificationPreferencesDto {
+    if (!deviceId) {
+      return mergeNotificationPreferences('unknown');
+    }
+    return prefsByDevice.get(deviceId) ?? mergeNotificationPreferences(deviceId);
+  }
+
+  private toPreferencesDto(row: {
+    deviceId: string;
+    signalsNew: boolean;
+    signalsTp: boolean;
+    signalsSl: boolean;
+    signalsLiquidation: boolean;
+    signalsClosed: boolean;
+    signalsUpdates: boolean;
+    priceAlerts: boolean;
+    spotEnabled: boolean;
+    futuresEnabled: boolean;
+  }): DeviceNotificationPreferencesDto {
+    return {
+      deviceId: row.deviceId,
+      signalsNew: row.signalsNew,
+      signalsTp: row.signalsTp,
+      signalsSl: row.signalsSl,
+      signalsLiquidation: row.signalsLiquidation,
+      signalsClosed: row.signalsClosed,
+      signalsUpdates: row.signalsUpdates,
+      priceAlerts: row.priceAlerts,
+      spotEnabled: row.spotEnabled,
+      futuresEnabled: row.futuresEnabled,
+    };
   }
 
   private render(tpl: string, data: Record<string, unknown>) {

@@ -1,6 +1,7 @@
-import { Body, Controller, Delete, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Patch, Post, Query } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
+import type { DeviceNotificationPreferencesUpdateDto } from '@qpulse/shared';
 import { DevicesService } from './devices.service';
 
 @ApiTags('devices')
@@ -18,5 +19,16 @@ export class DevicesController {
   @Delete('unregister')
   unregister(@Body() body: { pushToken: string }) {
     return this.devices.unregister(body.pushToken);
+  }
+
+  @Get('notification-preferences')
+  getNotificationPreferences(@Query('deviceId') deviceId: string) {
+    return this.devices.getNotificationPreferences(deviceId);
+  }
+
+  @Throttle({ 'public-write': { limit: 30, ttl: 60_000 } })
+  @Patch('notification-preferences')
+  updateNotificationPreferences(@Body() body: DeviceNotificationPreferencesUpdateDto) {
+    return this.devices.updateNotificationPreferences(body);
   }
 }

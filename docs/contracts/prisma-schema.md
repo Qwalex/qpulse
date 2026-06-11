@@ -73,6 +73,22 @@ Audit trail of semantic events.
 | deviceId | String? | |
 | isActive | Boolean | default true |
 
+### DeviceNotificationPreferences
+
+PK: `deviceId`. Per-device push filters (defaults all `true`).
+
+| Field | Maps to |
+|-------|---------|
+| signalsNew | SIGNAL_CREATED |
+| signalsTp | TP_HIT |
+| signalsSl | SL_HIT |
+| signalsLiquidation | LIQUIDATED |
+| signalsClosed | SIGNAL_CLOSED |
+| signalsUpdates | SIGNAL_UPDATED, SIGNAL_CANCELLED |
+| priceAlerts | Watch price alerts |
+| spotEnabled | SPOT market signal pushes |
+| futuresEnabled | FUTURES market signal pushes |
+
 ### NotificationLog
 
 Push delivery audit.

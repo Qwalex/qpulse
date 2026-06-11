@@ -16,6 +16,21 @@ _(пусто)_
 
 ## Done (recent)
 
+## [TASK-026] Granular push notification preferences
+- **Status:** done
+- **Assignee:** agent
+- **Priority:** P1
+- **Scope:** packages/shared, apps/api (devices, push, price-watch), apps/mobile, docs/contracts
+- **Description:** Per-device toggles for signal event types, price alerts, spot/futures markets; filter in PushWorker + PriceAlertPushService; UI on More.
+- **Acceptance criteria:**
+  - [x] DeviceNotificationPreferences in Prisma + GET/PATCH REST
+  - [x] PushWorker skips disabled types/markets (logged skipped)
+  - [x] PriceAlertPushService respects priceAlerts pref
+  - [x] Mobile Notification types section on More
+  - [x] Contracts updated; typecheck
+- **Notes:** Defaults all true; master Notifications toggle still controls token register/unregister.
+- **Updated:** 2026-06-11
+
 ## [TASK-025] More: notifications toggle + weekly prompt
 - **Status:** done
 - **Assignee:** agent
@@ -361,4 +376,4 @@ _(пусто)_
 
 ## Task ID counter
 
-Next ID: **TASK-022**
+Next ID: **TASK-027**

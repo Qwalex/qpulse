@@ -21,7 +21,7 @@
 | Tab | Route | Screen |
 |-----|-------|--------|
 | Home | `index` | Market metrics, Fear & Greed, results summary, social links |
-| More | `more` | Settings menu, dark mode toggle |
+| More | `more` | Settings menu, notifications + types, dark mode toggle |
 | Spots | `spots` | Live SPOT signals (OPEN + ACTIVE) |
 | Futures | `futures` | Live FUTURES signals |
 
@@ -56,6 +56,7 @@
 | `RiskBanner` | Spots, Futures | Red border disclaimer |
 | `TelegramFab` | Spots, Futures | `Linking.openURL(telegramFabUrl)` |
 | `SettingsMenuList` | More | Renders enabled MenuLinks by order |
+| `NotificationPreferencesSection` | More | Granular push toggles when notifications enabled |
 | `StarRating` | rate-review | 1–5 stars |
 
 ## Theme
