@@ -61,7 +61,8 @@ GET /market-metrics
 }
 ```
 
-- Aggregated server-side from public providers (CoinGecko global + top-100 30d performance for Altcoin Season proxy, Alternative.me Fear & Greed)
+- Aggregated server-side from CoinGecko (global, markets, charts) + Alternative.me Fear & Greed
+- Optional env `COINGECKO_API_KEY` (Demo: header `x-cg-demo-api-key`; Pro: `COINGECKO_API_TYPE=pro`) — без ключа действуют публичные лимиты
 - `totalVolume24h` — global 24h trading volume (CoinGecko global)
 - `btcPrice` / `btcChange24h` — Bitcoin spot price and 24h % change
 - `marketCapChart24h` — ~48 points over last 24h; shape from CoinGecko BTC market cap scaled to current total market cap (global chart endpoint is Pro-only)

@@ -18,8 +18,11 @@ import {
 const CACHE_KEY = 'qpulse:market-metrics:v6';
 const CACHE_TTL_SEC = 600;
 const STALE_TTL_SEC = 86_400;
+const COINGECKO_PUBLIC_BASE = 'https://api.coingecko.com/api/v3';
+const COINGECKO_PRO_BASE = 'https://pro-api.coingecko.com/api/v3';
 const ALTCOIN_SEASON_TOP_N = 50;
-const CHART_BATCH_SIZE = 6;
+const CHART_BATCH_SIZE_PUBLIC = 6;
+const CHART_BATCH_SIZE_AUTH = 10;
 const MIN_ALTCOIN_SAMPLE = 20;
 
 const EXCLUDED_COIN_IDS = new Set([
@@ -82,6 +85,12 @@ function sleep(ms: number): Promise<void> {
 export class MarketMetricsService implements OnModuleDestroy {
   private readonly logger = new Logger(MarketMetricsService.name);
   private readonly redis: Redis;
+  private readonly coingeckoBase: string;
+  private readonly coingeckoApiKey?: string;
+  private readonly coingeckoAuthHeader?: string;
+  private readonly chartBatchSize: number;
+  private readonly chartBatchDelayMs: number;
+  private readonly coingeckoRequestDelayMs: number;
 
   constructor(
     private readonly prisma: PrismaService,
@@ -90,6 +99,29 @@ export class MarketMetricsService implements OnModuleDestroy {
     this.redis = new Redis(config.get<string>('REDIS_URL', 'redis://localhost:6379'), {
       maxRetriesPerRequest: 1,
     });
+
+    const apiKey = config.get<string>('COINGECKO_API_KEY')?.trim();
+    const apiType = config.get<string>('COINGECKO_API_TYPE', 'demo').trim().toLowerCase();
+
+    if (apiKey && apiType === 'pro') {
+      this.coingeckoBase = COINGECKO_PRO_BASE;
+      this.coingeckoApiKey = apiKey;
+      this.coingeckoAuthHeader = 'x-cg-pro-api-key';
+      this.logger.log('CoinGecko Pro API key configured');
+    } else if (apiKey) {
+      this.coingeckoBase = COINGECKO_PUBLIC_BASE;
+      this.coingeckoApiKey = apiKey;
+      this.coingeckoAuthHeader = 'x-cg-demo-api-key';
+      this.logger.log('CoinGecko Demo API key configured');
+    } else {
+      this.coingeckoBase = COINGECKO_PUBLIC_BASE;
+      this.logger.warn('COINGECKO_API_KEY not set — using public rate limits');
+    }
+
+    const authenticated = Boolean(this.coingeckoApiKey);
+    this.chartBatchSize = authenticated ? CHART_BATCH_SIZE_AUTH : CHART_BATCH_SIZE_PUBLIC;
+    this.chartBatchDelayMs = authenticated ? 300 : 600;
+    this.coingeckoRequestDelayMs = authenticated ? 200 : 400;
   }
 
   async getPublic(): Promise<MarketMetricsDto> {
@@ -131,10 +163,16 @@ export class MarketMetricsService implements OnModuleDestroy {
     ]);
   }
 
-  private async fetchJson<T>(url: string, label: string): Promise<T> {
+  private async fetchJson<T>(
+    url: string,
+    label: string,
+    headers?: Record<string, string>,
+  ): Promise<T> {
     const maxAttempts = 3;
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-      const response = await fetch(url, { headers: { Accept: 'application/json' } });
+      const response = await fetch(url, {
+        headers: { Accept: 'application/json', ...headers },
+      });
       if (response.ok) {
         return (await response.json()) as T;
       }
@@ -147,9 +185,24 @@ export class MarketMetricsService implements OnModuleDestroy {
     throw new Error(`${label} failed after retries`);
   }
 
+  private coingeckoUrl(path: string): string {
+    return `${this.coingeckoBase}${path.startsWith('/') ? path : `/${path}`}`;
+  }
+
+  private coingeckoHeaders(): Record<string, string> {
+    if (!this.coingeckoApiKey || !this.coingeckoAuthHeader) {
+      return {};
+    }
+    return { [this.coingeckoAuthHeader]: this.coingeckoApiKey };
+  }
+
+  private fetchCoinGeckoJson<T>(path: string, label: string): Promise<T> {
+    return this.fetchJson<T>(this.coingeckoUrl(path), label, this.coingeckoHeaders());
+  }
+
   private async fetch90dChange(coinId: string): Promise<number> {
-    const chart = await this.fetchJson<CoinGeckoMarketChartResponse>(
-      `https://api.coingecko.com/api/v3/coins/${coinId}/market_chart?vs_currency=usd&days=90&interval=daily`,
+    const chart = await this.fetchCoinGeckoJson<CoinGeckoMarketChartResponse>(
+      `/coins/${coinId}/market_chart?vs_currency=usd&days=90&interval=daily`,
       `CoinGecko ${coinId} 90d`,
     );
     return compute90dChangeFromPrices(chart.prices ?? []);
@@ -171,8 +224,8 @@ export class MarketMetricsService implements OnModuleDestroy {
     let outperforming = 0;
     let valid = 0;
 
-    for (let i = 0; i < altIds.length; i += CHART_BATCH_SIZE) {
-      const batch = altIds.slice(i, i + CHART_BATCH_SIZE);
+    for (let i = 0; i < altIds.length; i += this.chartBatchSize) {
+      const batch = altIds.slice(i, i + this.chartBatchSize);
       const results = await Promise.allSettled(batch.map((id) => this.fetch90dChange(id)));
       for (const result of results) {
         if (result.status === 'fulfilled') {
@@ -180,8 +233,8 @@ export class MarketMetricsService implements OnModuleDestroy {
           if (result.value > btcChange90d) outperforming++;
         }
       }
-      if (i + CHART_BATCH_SIZE < altIds.length) {
-        await sleep(600);
+      if (i + this.chartBatchSize < altIds.length) {
+        await sleep(this.chartBatchDelayMs);
       }
     }
 
@@ -245,8 +298,8 @@ export class MarketMetricsService implements OnModuleDestroy {
     let marketCapChart24h: MarketMetricsDto['marketCapChart24h'];
 
     try {
-      const globalJson = await this.fetchJson<CoinGeckoGlobalResponse>(
-        'https://api.coingecko.com/api/v3/global',
+      const globalJson = await this.fetchCoinGeckoJson<CoinGeckoGlobalResponse>(
+        '/global',
         'CoinGecko global',
       );
       marketCapUsd = globalJson.data?.total_market_cap?.usd;
@@ -285,9 +338,9 @@ export class MarketMetricsService implements OnModuleDestroy {
     }
 
     try {
-      await sleep(400);
-      marketsJson = await this.fetchJson<CoinGeckoMarketRow[]>(
-        'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1&sparkline=false&price_change_percentage=30d',
+      await sleep(this.coingeckoRequestDelayMs);
+      marketsJson = await this.fetchCoinGeckoJson<CoinGeckoMarketRow[]>(
+        '/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1&sparkline=false&price_change_percentage=30d',
         'CoinGecko markets',
       );
     } catch (error) {
@@ -317,9 +370,9 @@ export class MarketMetricsService implements OnModuleDestroy {
 
     if (marketCapUsd != null) {
       try {
-        await sleep(400);
-        const chartJson = await this.fetchJson<CoinGeckoMarketChartResponse>(
-          'https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=1',
+        await sleep(this.coingeckoRequestDelayMs);
+        const chartJson = await this.fetchCoinGeckoJson<CoinGeckoMarketChartResponse>(
+          '/coins/bitcoin/market_chart?vs_currency=usd&days=1',
           'CoinGecko BTC market chart',
         );
         const scaled = scaleBtcMarketCapChart(chartJson.market_caps ?? [], marketCapUsd);
