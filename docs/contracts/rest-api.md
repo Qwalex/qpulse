@@ -51,6 +51,9 @@ GET /market-metrics
   "altcoinSeasonLabel": "Bitcoin Season",
   "fearGreedValue": 72,
   "fearGreedLabel": "Greed",
+  "totalVolume24h": "$79.90B",
+  "btcPrice": "$63,067",
+  "btcChange24h": 3.4,
   "marketCapChart24h": [
     { "timestamp": 1781091597003, "valueUsd": 2180000000000 },
     { "timestamp": 1781177967000, "valueUsd": 2240000000000 }
@@ -59,7 +62,10 @@ GET /market-metrics
 ```
 
 - Aggregated server-side from public providers (CoinGecko global + top-100 30d performance for Altcoin Season proxy, Alternative.me Fear & Greed)
+- `totalVolume24h` — global 24h trading volume (CoinGecko global)
+- `btcPrice` / `btcChange24h` — Bitcoin spot price and 24h % change
 - `marketCapChart24h` — ~48 points over last 24h; shape from CoinGecko BTC market cap scaled to current total market cap (global chart endpoint is Pro-only)
+- `altcoinSeasonIndex` — % of top-50 alts (excl. stables/wrapped) outperforming BTC over **90 days** (CoinGecko daily charts)
 - Redis cache TTL ~10 min; fallback to stale cache or admin `HomeContent` on provider errors
 
 ### Signals

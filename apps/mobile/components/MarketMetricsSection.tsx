@@ -115,13 +115,53 @@ export function MarketMetricsSection({ metrics }: MarketMetricsSectionProps) {
             fillColor={changeColor}
           />
         )}
+        {(metrics.btcPrice || metrics.totalVolume24h) && (
+          <View style={[styles.statsRow, { borderTopColor: themeColors.cardBorder }]}>
+            {metrics.btcPrice && (
+              <View style={styles.statItem}>
+                <Text style={[styles.statLabel, { color: themeColors.textMuted }]}>BTC</Text>
+                <View style={styles.statValueRow}>
+                  <Text style={[styles.statValue, { color: themeColors.text }]}>
+                    {metrics.btcPrice}
+                  </Text>
+                  {metrics.btcChange24h != null && (
+                    <Text
+                      style={[
+                        styles.statChange,
+                        {
+                          color:
+                            metrics.btcChange24h >= 0
+                              ? themeColors.success
+                              : themeColors.danger,
+                        },
+                      ]}
+                    >
+                      {metrics.btcChange24h >= 0 ? '+' : ''}
+                      {metrics.btcChange24h.toFixed(2)}%
+                    </Text>
+                  )}
+                </View>
+              </View>
+            )}
+            {metrics.totalVolume24h && (
+              <View style={styles.statItem}>
+                <Text style={[styles.statLabel, { color: themeColors.textMuted }]}>
+                  24h Volume
+                </Text>
+                <Text style={[styles.statValue, { color: themeColors.text }]}>
+                  {metrics.totalVolume24h}
+                </Text>
+              </View>
+            )}
+          </View>
+        )}
       </View>
 
       <View style={styles.gaugeRow}>
         <IndexGauge
           label="Altcoin Season"
           value={Number(metrics.altcoinSeasonIndex ?? 0)}
-          subtitle={metrics.altcoinSeasonLabel ?? '—'}
+          subtitle={`${metrics.altcoinSeasonLabel ?? '—'} · 90d`}
           color={asColor}
           icon="layers-outline"
         />
@@ -185,6 +225,35 @@ const styles = StyleSheet.create({
     borderRadius: radii.full,
   },
   changeText: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  statsRow: {
+    flexDirection: 'row',
+    gap: spacing.md,
+    marginTop: spacing.md,
+    paddingTop: spacing.md,
+    borderTopWidth: 1,
+  },
+  statItem: {
+    flex: 1,
+  },
+  statLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  statValueRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    flexWrap: 'wrap',
+    gap: spacing.xs,
+  },
+  statValue: {
+    fontSize: 17,
+    fontWeight: '700',
+  },
+  statChange: {
     fontSize: 13,
     fontWeight: '600',
   },

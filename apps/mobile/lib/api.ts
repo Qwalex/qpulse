@@ -125,7 +125,7 @@ export function fetchMarketMetrics(): Promise<MarketMetricsDto> {
 
 /** Fallback when /market-metrics is unavailable (e.g. API not deployed yet). */
 export function homeContentToMarketMetrics(home: HomeContentDto): MarketMetricsDto {
-  return {
+  const metrics: MarketMetricsDto = {
     totalMarketCap: home.totalMarketCap,
     totalMarketCapChange24h: home.totalMarketCapChange24h,
     altcoinSeasonIndex: home.altcoinSeasonIndex,
@@ -133,6 +133,14 @@ export function homeContentToMarketMetrics(home: HomeContentDto): MarketMetricsD
     fearGreedValue: home.fearGreedValue,
     fearGreedLabel: home.fearGreedLabel,
   };
+  if (home.btcPrice != null && home.btcPrice > 0) {
+    metrics.btcPrice = `$${home.btcPrice.toLocaleString('en-US', { maximumFractionDigits: 0 })}`;
+    metrics.btcChange24h = home.btcChange24h ?? home.totalMarketCapChange24h;
+  }
+  if (home.btcVolume) {
+    metrics.totalVolume24h = home.btcVolume;
+  }
+  return metrics;
 }
 
 export function fetchSettings(): Promise<AppSettingsDto> {

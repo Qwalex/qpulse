@@ -20,12 +20,21 @@ import {
 } from '@/lib/api';
 import { RiskBanner } from '@/components/RiskBanner';
 import { TabScreen } from '@/components/TabScreen';
-import { TelegramFab } from '@/components/TelegramFab';
+import { JoinTelegramChannelCard } from '@/components/JoinTelegramChannelCard';
 import { QueryErrorView } from '@/components/QueryErrorView';
 import { MarketMetricsSection } from '@/components/MarketMetricsSection';
 import { DashboardResultsSummary } from '@/components/DashboardResultsSummary';
 import { useAppStore } from '@/store/useAppStore';
 import { radii, spacing } from '@/constants/theme';
+
+function isTelegramLink(link: { id: string; url: string; icon: string }): boolean {
+  return (
+    link.icon === 'telegram' ||
+    link.id === 'telegram' ||
+    link.id === 'tg' ||
+    link.url.includes('t.me/')
+  );
+}
 
 export default function HomeScreen() {
   const themeColors = useAppStore((s) => s.colors);
@@ -91,6 +100,10 @@ export default function HomeScreen() {
       ? homeContentToMarketMetrics(home)
       : undefined;
 
+  const telegramFromSocial = home.socialLinks?.find(isTelegramLink);
+  const telegramUrl = telegramFromSocial?.url ?? settings?.telegramFabUrl ?? null;
+  const otherSocialLinks = (home.socialLinks ?? []).filter((link) => !isTelegramLink(link));
+
   return (
     <TabScreen style={{ backgroundColor: themeColors.background }}>
       <ScrollView
@@ -111,9 +124,11 @@ export default function HomeScreen() {
       >
         <RiskBanner disclaimer={settings?.disclaimer ?? ''} />
 
-        {(home.socialLinks?.length ?? 0) > 0 && (
+        {telegramUrl ? <JoinTelegramChannelCard url={telegramUrl} /> : null}
+
+        {otherSocialLinks.length > 0 && (
           <View style={styles.socialRow}>
-            {home.socialLinks.map((link) => (
+            {otherSocialLinks.map((link) => (
               <Pressable
                 key={link.id}
                 style={[
@@ -142,7 +157,6 @@ export default function HomeScreen() {
         />
       </ScrollView>
 
-      <TelegramFab url={settings?.telegramFabUrl} />
     </TabScreen>
   );
 }

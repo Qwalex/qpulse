@@ -5,14 +5,19 @@ import Redis from 'ioredis';
 import { PrismaService } from '../prisma/prisma.service';
 import {
   altcoinSeasonLabel,
+  compute90dChangeFromPrices,
   downsampleMarketCapChart,
+  formatBtcPrice,
   formatMarketCapUsd,
+  formatUsdCompact,
   mapHomeContentToMetrics,
   scaleBtcMarketCapChart,
 } from './market-metrics.mapper';
 
-const CACHE_KEY = 'qpulse:market-metrics:v3';
+const CACHE_KEY = 'qpulse:market-metrics:v4';
 const CACHE_TTL_SEC = 600;
+const ALTCOIN_SEASON_TOP_N = 50;
+const CHART_BATCH_SIZE = 8;
 
 const EXCLUDED_COIN_IDS = new Set([
   'tether',
@@ -30,12 +35,20 @@ const EXCLUDED_COIN_IDS = new Set([
   'lido-staked-ether',
   'wrapped-steth',
   'wrapped-beacon-eth',
+  'weth',
+  'staked-ether',
+  'binance-bridged-usdt-bnb-smart-chain',
+  'usdd',
+  'paxos-standard',
+  'gemini-dollar',
+  'tether-gold',
 ]);
 
 interface CoinGeckoGlobalResponse {
   data?: {
     total_market_cap?: { usd?: number };
     market_cap_change_percentage_24h_usd?: number;
+    total_volume?: { usd?: number };
   };
 }
 
@@ -46,17 +59,14 @@ interface FearGreedResponse {
 interface CoinGeckoMarketRow {
   id: string;
   symbol: string;
-  price_change_percentage_30d?: number | null;
-  price_change_percentage_30d_in_currency?: number | null;
+  current_price?: number;
+  price_change_percentage_24h?: number;
+  total_volume?: number;
 }
 
 interface CoinGeckoMarketChartResponse {
   market_caps?: Array<[number, number]>;
-}
-
-function coin30dChange(row: CoinGeckoMarketRow): number | null {
-  const change = row.price_change_percentage_30d_in_currency ?? row.price_change_percentage_30d;
-  return change == null ? null : change;
+  prices?: Array<[number, number]>;
 }
 
 function sleep(ms: number): Promise<void> {
@@ -115,6 +125,49 @@ export class MarketMetricsService implements OnModuleDestroy {
     throw new Error(`${label} failed after retries`);
   }
 
+  private async fetch90dChange(coinId: string): Promise<number> {
+    const chart = await this.fetchJson<CoinGeckoMarketChartResponse>(
+      `https://api.coingecko.com/api/v3/coins/${coinId}/market_chart?vs_currency=usd&days=90&interval=daily`,
+      `CoinGecko ${coinId} 90d`,
+    );
+    return compute90dChangeFromPrices(chart.prices ?? []);
+  }
+
+  private async computeAltcoinSeasonIndex90d(markets: CoinGeckoMarketRow[]): Promise<number> {
+    const altIds = markets
+      .filter((row) => row.id !== 'bitcoin' && !EXCLUDED_COIN_IDS.has(row.id))
+      .slice(0, ALTCOIN_SEASON_TOP_N)
+      .map((row) => row.id);
+
+    if (altIds.length === 0) {
+      throw new Error('No altcoins for season index');
+    }
+
+    const btcChange90d = await this.fetch90dChange('bitcoin');
+    let outperforming = 0;
+    let valid = 0;
+
+    for (let i = 0; i < altIds.length; i += CHART_BATCH_SIZE) {
+      const batch = altIds.slice(i, i + CHART_BATCH_SIZE);
+      const results = await Promise.allSettled(batch.map((id) => this.fetch90dChange(id)));
+      for (const result of results) {
+        if (result.status === 'fulfilled') {
+          valid++;
+          if (result.value > btcChange90d) outperforming++;
+        }
+      }
+      if (i + CHART_BATCH_SIZE < altIds.length) {
+        await sleep(400);
+      }
+    }
+
+    if (valid === 0) {
+      throw new Error('No valid 90d altcoin performance data');
+    }
+
+    return Math.max(0, Math.min(100, Math.round((outperforming / valid) * 100)));
+  }
+
   private async fetchLive(): Promise<MarketMetricsDto> {
     const [globalJson, fngJson] = await Promise.all([
       this.fetchJson<CoinGeckoGlobalResponse>(
@@ -129,6 +182,7 @@ export class MarketMetricsService implements OnModuleDestroy {
 
     const marketCapUsd = globalJson.data?.total_market_cap?.usd;
     const marketCapChange = globalJson.data?.market_cap_change_percentage_24h_usd;
+    const totalVolumeUsd = globalJson.data?.total_volume?.usd;
     if (marketCapUsd == null || marketCapChange == null) {
       throw new Error('CoinGecko response missing market cap fields');
     }
@@ -140,21 +194,26 @@ export class MarketMetricsService implements OnModuleDestroy {
       throw new Error('Fear & Greed response missing fields');
     }
 
+    await sleep(300);
+    const marketsJson = await this.fetchJson<CoinGeckoMarketRow[]>(
+      'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1&sparkline=false',
+      'CoinGecko markets',
+    );
+
+    const btcRow = marketsJson.find((row) => row.id === 'bitcoin');
+    const btcPriceUsd = btcRow?.current_price;
+    const btcChange24h = btcRow?.price_change_percentage_24h;
+
     let altcoinSeasonIndex = 50;
-    let marketCapChart24h: MarketMetricsDto['marketCapChart24h'];
     try {
-      await sleep(300);
-      const marketsJson = await this.fetchJson<CoinGeckoMarketRow[]>(
-        'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1&sparkline=false&price_change_percentage=30d',
-        'CoinGecko markets',
-      );
-      altcoinSeasonIndex = this.computeAltcoinSeasonIndex(marketsJson);
+      altcoinSeasonIndex = await this.computeAltcoinSeasonIndex90d(marketsJson);
     } catch (error) {
       this.logger.warn(
         `Altcoin season skipped: ${error instanceof Error ? error.message : String(error)}`,
       );
     }
 
+    let marketCapChart24h: MarketMetricsDto['marketCapChart24h'];
     try {
       await sleep(300);
       const chartJson = await this.fetchJson<CoinGeckoMarketChartResponse>(
@@ -172,6 +231,16 @@ export class MarketMetricsService implements OnModuleDestroy {
     const metrics: MarketMetricsDto = {
       totalMarketCap: formatMarketCapUsd(marketCapUsd),
       totalMarketCapChange24h: marketCapChange,
+      totalVolume24h:
+        totalVolumeUsd != null && Number.isFinite(totalVolumeUsd)
+          ? formatUsdCompact(totalVolumeUsd)
+          : undefined,
+      btcPrice:
+        btcPriceUsd != null && Number.isFinite(btcPriceUsd)
+          ? formatBtcPrice(btcPriceUsd)
+          : undefined,
+      btcChange24h:
+        btcChange24h != null && Number.isFinite(btcChange24h) ? btcChange24h : undefined,
       altcoinSeasonIndex,
       altcoinSeasonLabel: altcoinSeasonLabel(altcoinSeasonIndex),
       fearGreedValue: Math.max(0, Math.min(100, Math.round(fearGreedValue))),
@@ -181,32 +250,6 @@ export class MarketMetricsService implements OnModuleDestroy {
 
     await this.redis.set(`${CACHE_KEY}:stale`, JSON.stringify(metrics), 'EX', 86400);
     return metrics;
-  }
-
-  private computeAltcoinSeasonIndex(markets: CoinGeckoMarketRow[]): number {
-    if (!Array.isArray(markets) || markets.length === 0) {
-      throw new Error('CoinGecko markets response empty');
-    }
-
-    const btc = markets.find((row) => row.id === 'bitcoin');
-    const btcChange = coin30dChange(btc ?? { id: 'bitcoin', symbol: 'btc' }) ?? 0;
-
-    const alts = markets.filter(
-      (row) =>
-        row.id !== 'bitcoin' &&
-        !EXCLUDED_COIN_IDS.has(row.id) &&
-        coin30dChange(row) != null,
-    );
-
-    if (alts.length === 0) {
-      throw new Error('No altcoins with 30d performance data');
-    }
-
-    const outperforming = alts.filter(
-      (row) => (coin30dChange(row) ?? -Infinity) > btcChange,
-    ).length;
-
-    return Math.max(0, Math.min(100, Math.round((outperforming / alts.length) * 100)));
   }
 
   private async getHomeContentFallback(): Promise<MarketMetricsDto> {

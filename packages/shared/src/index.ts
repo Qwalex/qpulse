@@ -115,6 +115,10 @@ export interface MarketCapChartPoint {
 export interface MarketMetricsDto {
   totalMarketCap: string;
   totalMarketCapChange24h: number;
+  /** Global crypto 24h trading volume (formatted). */
+  totalVolume24h?: string;
+  btcPrice?: string;
+  btcChange24h?: number;
   altcoinSeasonIndex: number;
   altcoinSeasonLabel: string;
   fearGreedValue: number;
