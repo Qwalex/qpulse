@@ -37,9 +37,31 @@
 - Обнови docs, если менялись контракты.
 - Запусти: `pnpm lint && pnpm typecheck` (релевантные пакеты).
 
+## Связанный проект: signalsBot (bb-trader)
+
+| | |
+|--|--|
+| Путь | `c:\Users\qwazi\Projects\signalsBotProd` |
+| Роль | Торговля Bybit, ingest Telegram, mirror в группы, **авто-sync сигналов в QPulse** |
+| Документация | signalsBot `docs/qpulse-ecosystem.md`; здесь — [integrations/signalsbot.md](docs/integrations/signalsbot.md) |
+
+Интеграция: `POST/PATCH /integrations/signals`, заголовок `X-API-Key` = env `INTEGRATIONS_API_KEY` (не admin JWT).
+
+## Admin — учётные данные (seed)
+
+После `pnpm --filter api prisma db seed` или первого деплоя с `RUN_SEED=true`:
+
+- **Email:** `admin@qpulse.app`
+- **Пароль:** `admin123` (сменить на production; UI смены пароля пока нет)
+
+Локально: http://localhost:3000/login. Railway: домен сервиса `qpulse-admin` → `/login`.
+
 ## Полезные ссылки
 
 - [Architecture](docs/architecture.md)
 - [Getting started](docs/getting-started.md)
 - [REST API contracts](docs/contracts/rest-api.md)
+- [signalsBot integration](docs/integrations/signalsbot.md)
+- [Deploy Railway](docs/runbooks/deploy-railway.md)
+- [Admin app](docs/apps/admin.md)
 - [Task tracker](tasks.md)

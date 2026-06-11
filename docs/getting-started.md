@@ -81,7 +81,15 @@ EXPO_PUBLIC_API_URL=http://localhost:3001
 
 ## Seed admin user
 
-После `prisma db seed` используй credentials из `apps/api/prisma/seed.ts` (обычно `admin@qpulse.local`).
+После `prisma db seed` (или `RUN_SEED=true` на первом Railway-деплое):
+
+| | |
+|--|--|
+| URL | http://localhost:3000/login |
+| Email | `admin@qpulse.app` |
+| Password | `admin123` |
+
+Источник: `apps/api/prisma/seed.ts`. На production смените пароль; не оставляйте `RUN_SEED=true` после первого деплоя.
 
 ## Useful commands
 
