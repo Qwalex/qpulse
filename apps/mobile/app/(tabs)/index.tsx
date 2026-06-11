@@ -85,7 +85,11 @@ export default function HomeScreen() {
 
   const home = homeQuery.data!;
   const settings = settingsQuery.data;
-  const metrics = metricsQuery.data ?? homeContentToMarketMetrics(home);
+  const metrics = metricsQuery.isSuccess
+    ? metricsQuery.data
+    : metricsQuery.isError
+      ? homeContentToMarketMetrics(home)
+      : undefined;
 
   return (
     <TabScreen style={{ backgroundColor: themeColors.background }}>
@@ -125,7 +129,11 @@ export default function HomeScreen() {
           </View>
         )}
 
-        <MarketMetricsSection metrics={metrics} />
+        {metrics ? (
+          <MarketMetricsSection metrics={metrics} />
+        ) : metricsQuery.isLoading ? (
+          <ActivityIndicator color={themeColors.accent} style={styles.metricsLoader} />
+        ) : null}
 
         <DashboardResultsSummary
           futuresSummary={futuresResultsQuery.data?.summary}
@@ -170,5 +178,8 @@ const styles = StyleSheet.create({
   socialText: {
     fontSize: 13,
     fontWeight: '600',
+  },
+  metricsLoader: {
+    marginVertical: spacing.lg,
   },
 });

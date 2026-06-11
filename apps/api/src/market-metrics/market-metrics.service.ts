@@ -9,7 +9,7 @@ import {
   mapHomeContentToMetrics,
 } from './market-metrics.mapper';
 
-const CACHE_KEY = 'qpulse:market-metrics';
+const CACHE_KEY = 'qpulse:market-metrics:v2';
 const CACHE_TTL_SEC = 600;
 
 const EXCLUDED_COIN_IDS = new Set([
@@ -45,6 +45,16 @@ interface CoinGeckoMarketRow {
   id: string;
   symbol: string;
   price_change_percentage_30d?: number | null;
+  price_change_percentage_30d_in_currency?: number | null;
+}
+
+function coin30dChange(row: CoinGeckoMarketRow): number | null {
+  const change = row.price_change_percentage_30d_in_currency ?? row.price_change_percentage_30d;
+  return change == null ? null : change;
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 @Injectable()
@@ -83,33 +93,33 @@ export class MarketMetricsService implements OnModuleDestroy {
     }
   }
 
+  private async fetchJson<T>(url: string, label: string): Promise<T> {
+    const maxAttempts = 3;
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      const response = await fetch(url, { headers: { Accept: 'application/json' } });
+      if (response.ok) {
+        return (await response.json()) as T;
+      }
+      if (response.status === 429 && attempt < maxAttempts) {
+        await sleep(1000 * attempt);
+        continue;
+      }
+      throw new Error(`${label} HTTP ${response.status}`);
+    }
+    throw new Error(`${label} failed after retries`);
+  }
+
   private async fetchLive(): Promise<MarketMetricsDto> {
-    const [globalRes, fngRes, marketsRes] = await Promise.all([
-      fetch('https://api.coingecko.com/api/v3/global', {
-        headers: { Accept: 'application/json' },
-      }),
-      fetch('https://api.alternative.me/fng/?limit=1', {
-        headers: { Accept: 'application/json' },
-      }),
-      fetch(
-        'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1&sparkline=false&price_change_percentage=30d',
-        { headers: { Accept: 'application/json' } },
+    const [globalJson, fngJson] = await Promise.all([
+      this.fetchJson<CoinGeckoGlobalResponse>(
+        'https://api.coingecko.com/api/v3/global',
+        'CoinGecko global',
+      ),
+      this.fetchJson<FearGreedResponse>(
+        'https://api.alternative.me/fng/?limit=1',
+        'Alternative.me FNG',
       ),
     ]);
-
-    if (!globalRes.ok) {
-      throw new Error(`CoinGecko global HTTP ${globalRes.status}`);
-    }
-    if (!fngRes.ok) {
-      throw new Error(`Alternative.me HTTP ${fngRes.status}`);
-    }
-    if (!marketsRes.ok) {
-      throw new Error(`CoinGecko markets HTTP ${marketsRes.status}`);
-    }
-
-    const globalJson = (await globalRes.json()) as CoinGeckoGlobalResponse;
-    const fngJson = (await fngRes.json()) as FearGreedResponse;
-    const marketsJson = (await marketsRes.json()) as CoinGeckoMarketRow[];
 
     const marketCapUsd = globalJson.data?.total_market_cap?.usd;
     const marketCapChange = globalJson.data?.market_cap_change_percentage_24h_usd;
@@ -124,7 +134,19 @@ export class MarketMetricsService implements OnModuleDestroy {
       throw new Error('Fear & Greed response missing fields');
     }
 
-    const altcoinSeasonIndex = this.computeAltcoinSeasonIndex(marketsJson);
+    let altcoinSeasonIndex = 50;
+    try {
+      await sleep(300);
+      const marketsJson = await this.fetchJson<CoinGeckoMarketRow[]>(
+        'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1&sparkline=false&price_change_percentage=30d',
+        'CoinGecko markets',
+      );
+      altcoinSeasonIndex = this.computeAltcoinSeasonIndex(marketsJson);
+    } catch (error) {
+      this.logger.warn(
+        `Altcoin season skipped: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
 
     const metrics: MarketMetricsDto = {
       totalMarketCap: formatMarketCapUsd(marketCapUsd),
@@ -145,13 +167,13 @@ export class MarketMetricsService implements OnModuleDestroy {
     }
 
     const btc = markets.find((row) => row.id === 'bitcoin');
-    const btcChange = btc?.price_change_percentage_30d ?? 0;
+    const btcChange = coin30dChange(btc ?? { id: 'bitcoin', symbol: 'btc' }) ?? 0;
 
     const alts = markets.filter(
       (row) =>
         row.id !== 'bitcoin' &&
         !EXCLUDED_COIN_IDS.has(row.id) &&
-        row.price_change_percentage_30d != null,
+        coin30dChange(row) != null,
     );
 
     if (alts.length === 0) {
@@ -159,7 +181,7 @@ export class MarketMetricsService implements OnModuleDestroy {
     }
 
     const outperforming = alts.filter(
-      (row) => (row.price_change_percentage_30d ?? -Infinity) > btcChange,
+      (row) => (coin30dChange(row) ?? -Infinity) > btcChange,
     ).length;
 
     return Math.max(0, Math.min(100, Math.round((outperforming / alts.length) * 100)));
