@@ -24,6 +24,7 @@ import { JoinTelegramChannelCard } from '@/components/JoinTelegramChannelCard';
 import { QueryErrorView } from '@/components/QueryErrorView';
 import { MarketMetricsSection } from '@/components/MarketMetricsSection';
 import { DashboardResultsSummary } from '@/components/DashboardResultsSummary';
+import { ProfitEmulationCard } from '@/components/ProfitEmulationCard';
 import { useAppStore } from '@/store/useAppStore';
 import { radii, spacing } from '@/constants/theme';
 
@@ -152,6 +153,12 @@ export default function HomeScreen() {
         ) : null}
 
         <DashboardResultsSummary
+          futuresSummary={futuresResultsQuery.data?.summary}
+          spotSummary={spotResultsQuery.data?.summary}
+          isLoading={resultsLoading}
+        />
+
+        <ProfitEmulationCard
           futuresSummary={futuresResultsQuery.data?.summary}
           spotSummary={spotResultsQuery.data?.summary}
           isLoading={resultsLoading}

@@ -16,6 +16,20 @@ _(пусто)_
 
 ## Done (recent)
 
+## [TASK-022] Home: profit emulation under Signal Results
+- **Status:** done
+- **Assignee:** agent
+- **Priority:** P1
+- **Scope:** packages/shared, apps/mobile
+- **Description:** Блок Profit Emulation под Signal Results: ввод capital, прогноз week/month/year от weighted total profit за 3M.
+- **Acceptance criteria:**
+  - [x] Ввод capital USD, расчёт week/month/year
+  - [x] Weighted total profit Futures+Spot (3M)
+  - [x] Скрыт если нет closed results
+  - [x] typecheck OK
+- **Notes:** `profit-emulation.util.ts`, `ProfitEmulationCard.tsx` на Home.
+- **Updated:** 2026-06-11
+
 ## [TASK-021] Mobile UI fixes: Results theme, live metrics, Home results, Spot BUY
 - **Status:** done
 - **Assignee:** agent

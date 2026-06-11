@@ -249,3 +249,13 @@ export type { ClientErrorCreateDto, ClientErrorReportDto } from './client-errors
 export { computeProfitPercentage } from './signal-profit.util';
 export { computeResultsSummary } from './results-summary.util';
 export type { ResultsSummarySignalInput } from './results-summary.util';
+export {
+  DASHBOARD_RESULTS_PERIOD_DAYS,
+  emulateProfitUsd,
+  resolveEmulationTotalProfitPercent,
+} from './profit-emulation.util';
+export type {
+  ProfitEmulationPeriod,
+  ProfitEmulationProjection,
+  ResultsSummaryProfitInput,
+} from './profit-emulation.util';
