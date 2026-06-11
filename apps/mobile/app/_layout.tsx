@@ -1,7 +1,5 @@
 import { useEffect } from 'react';
 
-import { Platform } from 'react-native';
-
 import { QueryClientProvider } from '@tanstack/react-query';
 
 import { Stack, useRouter } from 'expo-router';
@@ -13,12 +11,14 @@ import * as Notifications from 'expo-notifications';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { AppErrorBoundary } from '@/components/AppErrorBoundary';
+import { NotificationsEnablePromptModal } from '@/components/NotificationsEnablePromptModal';
 
 import { useSignalRealtime } from '@/hooks/useSignalRealtime';
 
-import { registerDevice } from '@/lib/api';
-
-import { getDeviceId } from '@/lib/deviceId';
+import {
+  subscribePushRegistrationRetry,
+  syncPushRegistration,
+} from '@/lib/pushRegistration';
 
 import { createAppQueryClient } from '@/lib/query-client';
 
@@ -43,19 +43,6 @@ Notifications.setNotificationHandler({
   }),
 
 });
-
-
-
-async function ensureNotificationChannels() {
-  if (Platform.OS === 'android') {
-    await Notifications.setNotificationChannelAsync('price_alerts', {
-      name: 'Price Alerts',
-      importance: Notifications.AndroidImportance.HIGH,
-      vibrationPattern: [0, 250, 250, 250],
-      lightColor: '#3B82F6',
-    });
-  }
-}
 
 
 
@@ -105,42 +92,6 @@ function ThemeProvider({ children }: { children: React.ReactNode }) {
 
 
 
-async function registerForPushNotifications() {
-
-  const { status: existing } = await Notifications.getPermissionsAsync();
-
-  let finalStatus = existing;
-
-  if (existing !== 'granted') {
-
-    const { status } = await Notifications.requestPermissionsAsync();
-
-    finalStatus = status;
-
-  }
-
-  if (finalStatus !== 'granted') return;
-
-
-
-  const deviceId = await getDeviceId();
-
-  const tokenData = await Notifications.getExpoPushTokenAsync();
-
-  await registerDevice({
-
-    pushToken: tokenData.data,
-
-    platform: Platform.OS,
-
-    deviceId,
-
-  });
-
-}
-
-
-
 function resolveDeepLinkRoute(deepLink: unknown): string | null {
 
   if (typeof deepLink !== 'string' || !deepLink) return null;
@@ -165,16 +116,21 @@ export default function RootLayout() {
   const router = useRouter();
 
   const themeColors = useAppStore((s) => s.colors);
-
-
+  const hydrateNotifications = useAppStore((s) => s.hydrateNotifications);
+  const notificationsHydrated = useAppStore((s) => s.notificationsHydrated);
+  const notificationsEnabled = useAppStore((s) => s.notificationsEnabled);
 
   useEffect(() => {
+    void hydrateNotifications();
+  }, [hydrateNotifications]);
 
-    void ensureNotificationChannels();
-
-    registerForPushNotifications().catch(() => undefined);
-
-  }, []);
+  useEffect(() => {
+    if (!notificationsHydrated) return;
+    void syncPushRegistration();
+    return subscribePushRegistrationRetry(() => {
+      void syncPushRegistration();
+    });
+  }, [notificationsHydrated, notificationsEnabled]);
 
 
 
@@ -213,6 +169,8 @@ export default function RootLayout() {
         <ThemeProvider>
 
           <RealtimeProvider>
+
+            <NotificationsEnablePromptModal />
 
             <Stack
 

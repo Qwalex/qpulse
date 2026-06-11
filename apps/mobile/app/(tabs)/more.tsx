@@ -1,5 +1,15 @@
-import { useMemo } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import { useMemo, useState } from 'react';
+import {
+  ActivityIndicator,
+  Alert,
+  Linking,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Switch,
+  Text,
+  View,
+} from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'expo-router';
 import type { MenuLinkDto } from '@qpulse/shared';
@@ -23,9 +33,31 @@ export default function MoreScreen() {
   const themeColors = useAppStore((s) => s.colors);
 
   const isDarkMode = useAppStore((s) => s.isDarkMode);
-
   const toggleDarkMode = useAppStore((s) => s.toggleDarkMode);
+  const notificationsEnabled = useAppStore((s) => s.notificationsEnabled);
+  const notificationsHydrated = useAppStore((s) => s.notificationsHydrated);
+  const setNotificationsEnabled = useAppStore((s) => s.setNotificationsEnabled);
+  const [notificationsBusy, setNotificationsBusy] = useState(false);
   const { ready: reviewReady, hasReview } = useDeviceReview();
+
+  const onNotificationsToggle = async (value: boolean) => {
+    setNotificationsBusy(true);
+    try {
+      const registered = await setNotificationsEnabled(value);
+      if (value && !registered) {
+        Alert.alert(
+          'Permission required',
+          'Allow notifications in system settings to receive signal and price alerts.',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            { text: 'Open settings', onPress: () => void Linking.openSettings() },
+          ],
+        );
+      }
+    } finally {
+      setNotificationsBusy(false);
+    }
+  };
 
   const menuQuery = useQuery({
 
@@ -83,9 +115,27 @@ export default function MoreScreen() {
 
     <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
 
-      <View style={[styles.darkModeRow, { backgroundColor: themeColors.card, borderColor: themeColors.cardBorder }]}>
+      <View style={[styles.settingsRow, { backgroundColor: themeColors.card, borderColor: themeColors.cardBorder }]}>
+        <View style={styles.settingsRowText}>
+          <Text style={[styles.settingsLabel, { color: themeColors.text }]}>Notifications</Text>
+          <Text style={[styles.settingsHint, { color: themeColors.textMuted }]}>
+            Signal updates and price alerts
+          </Text>
+        </View>
+        {!notificationsHydrated || notificationsBusy ? (
+          <ActivityIndicator color={themeColors.accent} />
+        ) : (
+          <Switch
+            value={notificationsEnabled}
+            onValueChange={(value) => void onNotificationsToggle(value)}
+            trackColor={{ false: themeColors.cardBorder, true: themeColors.accentMuted }}
+            thumbColor={notificationsEnabled ? themeColors.accent : '#f4f3f4'}
+          />
+        )}
+      </View>
 
-        <Text style={[styles.darkModeLabel, { color: themeColors.text }]}>Dark Mode</Text>
+      <View style={[styles.settingsRow, { backgroundColor: themeColors.card, borderColor: themeColors.cardBorder }]}>
+        <Text style={[styles.settingsLabel, { color: themeColors.text }]}>Dark Mode</Text>
 
         <Switch
 
@@ -177,30 +227,26 @@ const styles = StyleSheet.create({
 
   },
 
-  darkModeRow: {
-
+  settingsRow: {
     flexDirection: 'row',
-
     alignItems: 'center',
-
     justifyContent: 'space-between',
-
     borderRadius: radii.md,
-
     borderWidth: 1,
-
     padding: spacing.md,
-
     marginBottom: spacing.md,
-
   },
-
-  darkModeLabel: {
-
+  settingsRowText: {
+    flex: 1,
+    paddingRight: spacing.md,
+  },
+  settingsLabel: {
     fontSize: 16,
-
     fontWeight: '600',
-
+  },
+  settingsHint: {
+    fontSize: 13,
+    marginTop: 4,
   },
 
   fallback: {

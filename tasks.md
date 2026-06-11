@@ -16,6 +16,33 @@ _(пусто)_
 
 ## Done (recent)
 
+## [TASK-025] More: notifications toggle + weekly prompt
+- **Status:** done
+- **Assignee:** agent
+- **Priority:** P1
+- **Scope:** apps/mobile (more.tsx, pushRegistration, notificationPreferences, modal)
+- **Description:** Переключатель уведомлений на More; при выключении — unregister push; модалка раз в 7 дней с предложением включить.
+- **Acceptance criteria:**
+  - [x] Toggle Notifications на More
+  - [x] Выключение → unregister + без регистрации при старте
+  - [x] Модалка не чаще 1 раза в неделю
+  - [x] typecheck
+- **Updated:** 2026-06-11
+
+## [TASK-024] Fix push token registration (DeviceToken empty)
+- **Status:** done
+- **Assignee:** agent
+- **Priority:** P0
+- **Scope:** apps/mobile/lib/pushRegistration.ts, apps/mobile/app/_layout.tsx
+- **Description:** Регистрация Expo push token падала тихо: без `projectId`, ошибки `.catch(() => undefined)`.
+- **Acceptance criteria:**
+  - [x] `getExpoPushTokenAsync({ projectId })` из app.json / EAS config
+  - [x] Ошибки в client-errors + console в dev
+  - [x] Android channels signals_* + price_alerts
+  - [x] Retry при возврате в foreground
+- **Notes:** Нужен новый EAS preview APK + разрешение уведомлений на устройстве; FCM V1 в expo.dev project qpulse.
+- **Updated:** 2026-06-11
+
 ## [TASK-023] Coin price tracking (Watch tab)
 - **Status:** done
 - **Assignee:** agent
