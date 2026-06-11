@@ -16,6 +16,22 @@ _(пусто)_
 
 ## Done (recent)
 
+## [TASK-021] Mobile UI fixes: Results theme, live metrics, Home results, Spot BUY
+- **Status:** done
+- **Assignee:** agent
+- **Priority:** P1
+- **Scope:** packages/shared, apps/api/market-metrics, apps/mobile, docs/contracts, AGENTS.md
+- **Description:** Light theme на Results; live market metrics через API proxy; Home Signal Results futures→spot; BUY зелёный на Spots; default Futures; EAS APK + qnotify.
+- **Acceptance criteria:**
+  - [x] ResultsMarketToggle, TimeframePills, SummaryStatsCard theme-aware
+  - [x] Default Results market = Futures
+  - [x] GET /market-metrics с Redis cache (CoinGecko + Alternative.me)
+  - [x] Home: market metrics из /market-metrics; Signal Results futures→spot, hide empty
+  - [x] SignalCard: BUY/SELL color when direction null
+  - [x] typecheck OK; preview APK + qnotify
+- **Notes:** Altcoin Season — proxy через top-100 CoinGecko 30d vs BTC (CMC trial API недоступен). Admin lint pre-existing fail.
+- **Updated:** 2026-06-11
+
 ## [TASK-020] Mobile dashboard: market metrics + results summary
 - **Status:** done
 - **Assignee:** agent
@@ -289,4 +305,4 @@ _(пусто)_
 
 ## Task ID counter
 
-Next ID: **TASK-021**
+Next ID: **TASK-022**

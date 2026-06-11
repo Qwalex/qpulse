@@ -1,11 +1,11 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import type { HomeContentDto } from '@qpulse/shared';
+import type { MarketMetricsDto } from '@qpulse/shared';
 import { radii, spacing } from '@/constants/theme';
 import { useAppStore } from '@/store/useAppStore';
 
 interface MarketMetricsSectionProps {
-  home: HomeContentDto;
+  metrics: MarketMetricsDto;
 }
 
 function fearGreedColor(value: number): string {
@@ -69,13 +69,13 @@ function IndexGauge({
   );
 }
 
-export function MarketMetricsSection({ home }: MarketMetricsSectionProps) {
+export function MarketMetricsSection({ metrics }: MarketMetricsSectionProps) {
   const themeColors = useAppStore((s) => s.colors);
-  const change = Number(home.totalMarketCapChange24h ?? 0);
+  const change = Number(metrics.totalMarketCapChange24h ?? 0);
   const changePositive = change >= 0;
   const changeColor = changePositive ? themeColors.success : themeColors.danger;
-  const fgColor = fearGreedColor(Number(home.fearGreedValue ?? 0));
-  const asColor = altcoinSeasonColor(Number(home.altcoinSeasonIndex ?? 0));
+  const fgColor = fearGreedColor(Number(metrics.fearGreedValue ?? 0));
+  const asColor = altcoinSeasonColor(Number(metrics.altcoinSeasonIndex ?? 0));
 
   return (
     <View style={styles.section}>
@@ -95,7 +95,7 @@ export function MarketMetricsSection({ home }: MarketMetricsSectionProps) {
             Total Market Cap
           </Text>
         </View>
-        <Text style={[styles.capValue, { color: themeColors.text }]}>{home.totalMarketCap}</Text>
+        <Text style={[styles.capValue, { color: themeColors.text }]}>{metrics.totalMarketCap}</Text>
         <View style={[styles.changeBadge, { backgroundColor: changeColor + '18' }]}>
           <Ionicons
             name={changePositive ? 'trending-up' : 'trending-down'}
@@ -112,15 +112,15 @@ export function MarketMetricsSection({ home }: MarketMetricsSectionProps) {
       <View style={styles.gaugeRow}>
         <IndexGauge
           label="Altcoin Season"
-          value={Number(home.altcoinSeasonIndex ?? 0)}
-          subtitle={home.altcoinSeasonLabel ?? '—'}
+          value={Number(metrics.altcoinSeasonIndex ?? 0)}
+          subtitle={metrics.altcoinSeasonLabel ?? '—'}
           color={asColor}
           icon="layers-outline"
         />
         <IndexGauge
           label="Fear & Greed"
-          value={Number(home.fearGreedValue ?? 0)}
-          subtitle={home.fearGreedLabel ?? '—'}
+          value={Number(metrics.fearGreedValue ?? 0)}
+          subtitle={metrics.fearGreedLabel ?? '—'}
           color={fgColor}
           icon="pulse-outline"
         />

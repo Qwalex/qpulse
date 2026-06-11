@@ -2,8 +2,17 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { SignalDto } from '@qpulse/shared';
 import { Direction, SignalStatus } from '@qpulse/shared';
-import { radii, spacing } from '@/constants/theme';
+import { radii, spacing, type ThemeColors } from '@/constants/theme';
 import { useAppStore } from '@/store/useAppStore';
+
+function resolveSignalColor(signal: SignalDto, themeColors: ThemeColors): string {
+  if (signal.direction === Direction.LONG) return themeColors.long;
+  if (signal.direction === Direction.SHORT) return themeColors.short;
+  const action = signal.action?.toUpperCase();
+  if (action === 'BUY') return themeColors.long;
+  if (action === 'SELL') return themeColors.short;
+  return themeColors.textMuted;
+}
 
 interface SignalCardProps {
   signal: SignalDto;
@@ -27,8 +36,7 @@ export function SignalCard({ signal }: SignalCardProps) {
   const expanded = useAppStore((s) => s.expandedSignalIds.has(signal.id));
   const toggleExpanded = useAppStore((s) => s.toggleExpanded);
 
-  const isLong = signal.direction === Direction.LONG;
-  const directionColor = isLong ? themeColors.long : themeColors.short;
+  const directionColor = resolveSignalColor(signal, themeColors);
   const statusLabel = signal.status === SignalStatus.OPEN ? 'OPEN' : 'ACTIVE';
 
   return (

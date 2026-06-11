@@ -63,9 +63,9 @@ export default function ResultsScreen() {
 
 
   useEffect(() => {
-
-    setMarket(parseMarketType(params.marketType));
-
+    if (params.marketType) {
+      setMarket(parseMarketType(params.marketType));
+    }
   }, [params.marketType, setMarket]);
 
 

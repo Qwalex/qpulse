@@ -1,6 +1,7 @@
 import { Pressable, ScrollView, StyleSheet, Text } from 'react-native';
 import { TIMEFRAME_API_MAP } from '@qpulse/shared';
-import { colors, radii, spacing } from '@/constants/theme';
+import { radii, spacing } from '@/constants/theme';
+import { useAppStore } from '@/store/useAppStore';
 
 interface TimeframePillsProps {
   value: string;
@@ -10,6 +11,8 @@ interface TimeframePillsProps {
 const TIMEFRAMES = Object.keys(TIMEFRAME_API_MAP);
 
 export function TimeframePills({ value, onChange }: TimeframePillsProps) {
+  const themeColors = useAppStore((s) => s.colors);
+
   return (
     <ScrollView
       horizontal
@@ -21,10 +24,28 @@ export function TimeframePills({ value, onChange }: TimeframePillsProps) {
         return (
           <Pressable
             key={tf}
-            style={[styles.pill, active && styles.pillActive]}
+            style={[
+              styles.pill,
+              {
+                backgroundColor: themeColors.card,
+                borderColor: themeColors.cardBorder,
+              },
+              active && {
+                backgroundColor: themeColors.accent,
+                borderColor: themeColors.accent,
+              },
+            ]}
             onPress={() => onChange(tf)}
           >
-            <Text style={[styles.pillText, active && styles.pillTextActive]}>{tf}</Text>
+            <Text
+              style={[
+                styles.pillText,
+                { color: themeColors.textSecondary },
+                active && { color: themeColors.textOnAccent },
+              ]}
+            >
+              {tf}
+            </Text>
           </Pressable>
         );
       })}
@@ -42,20 +63,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     borderRadius: radii.full,
-    backgroundColor: colors.card,
     borderWidth: 1,
-    borderColor: colors.cardBorder,
-  },
-  pillActive: {
-    backgroundColor: colors.accent,
-    borderColor: colors.accent,
   },
   pillText: {
-    color: colors.textSecondary,
     fontSize: 13,
     fontWeight: '600',
-  },
-  pillTextActive: {
-    color: colors.text,
   },
 });

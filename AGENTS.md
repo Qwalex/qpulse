@@ -19,7 +19,7 @@
 
 ## Non-negotiable rules
 
-- **Нет внешних market API** (CoinGecko, Alternative.me и т.п.) — все данные из PostgreSQL через админку.
+- **Нет внешних market API** в mobile/admin напрямую — исключение: `apps/api/src/market-metrics` (CoinGecko, Alternative.me, CMC trial) с Redis-кэшем; mobile читает `GET /market-metrics`.
 - **Signal CRUD только в admin** — статусы `OPEN` / `ACTIVE` / `CLOSED` / `CANCELLED`; флаг `liquidated` для закрытия по ликвидации; `CANCELLED` скрыт от mobile.
 - **Menu items** → модель `MenuLink`; social links на Home → `HomeContent.socialLinks` (без WhatsApp).
 - **Push token** → только `POST /devices/register`. WebSocket — только subscribe/broadcast.
@@ -37,9 +37,31 @@
 - Обнови docs, если менялись контракты.
 - Запусти: `pnpm lint && pnpm typecheck` (релевантные пакеты).
 
+## Связанный проект: signalsBot (bb-trader)
+
+| | |
+|--|--|
+| Путь | `c:\Users\qwazi\Projects\signalsBotProd` |
+| Роль | Торговля Bybit, ingest Telegram, mirror в группы, **авто-sync сигналов в QPulse** |
+| Документация | signalsBot `docs/qpulse-ecosystem.md`; здесь — [integrations/signalsbot.md](docs/integrations/signalsbot.md) |
+
+Интеграция: `POST/PATCH /integrations/signals`, заголовок `X-API-Key` = env `INTEGRATIONS_API_KEY` (не admin JWT).
+
+## Admin — учётные данные (seed)
+
+После `pnpm --filter api prisma db seed` или первого деплоя с `RUN_SEED=true`:
+
+- **Email:** `admin@qpulse.app`
+- **Пароль:** `admin123` (сменить на production; UI смены пароля пока нет)
+
+Локально: http://localhost:3000/login. Railway: домен сервиса `qpulse-admin` → `/login`.
+
 ## Полезные ссылки
 
 - [Architecture](docs/architecture.md)
 - [Getting started](docs/getting-started.md)
 - [REST API contracts](docs/contracts/rest-api.md)
+- [signalsBot integration](docs/integrations/signalsbot.md)
+- [Deploy Railway](docs/runbooks/deploy-railway.md)
+- [Admin app](docs/apps/admin.md)
 - [Task tracker](tasks.md)

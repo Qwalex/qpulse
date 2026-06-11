@@ -107,6 +107,15 @@ export interface ResultsResponse {
   signals: SignalDto[];
 }
 
+export interface MarketMetricsDto {
+  totalMarketCap: string;
+  totalMarketCapChange24h: number;
+  altcoinSeasonIndex: number;
+  altcoinSeasonLabel: string;
+  fearGreedValue: number;
+  fearGreedLabel: string;
+}
+
 export interface HomeContentDto {
   totalMarketCap: string;
   totalMarketCapChange24h: number;

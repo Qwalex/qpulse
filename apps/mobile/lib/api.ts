@@ -2,6 +2,7 @@ import type {
   AppSettingsDto,
   DeviceRegisterDto,
   HomeContentDto,
+  MarketMetricsDto,
   MenuLinkDto,
   ResultsResponse,
   ReviewCreateDto,
@@ -116,6 +117,22 @@ export function fetchResults(
 
 export function fetchHomeContent(): Promise<HomeContentDto> {
   return request<HomeContentDto>('/home-content');
+}
+
+export function fetchMarketMetrics(): Promise<MarketMetricsDto> {
+  return request<MarketMetricsDto>('/market-metrics');
+}
+
+/** Fallback when /market-metrics is unavailable (e.g. API not deployed yet). */
+export function homeContentToMarketMetrics(home: HomeContentDto): MarketMetricsDto {
+  return {
+    totalMarketCap: home.totalMarketCap,
+    totalMarketCapChange24h: home.totalMarketCapChange24h,
+    altcoinSeasonIndex: home.altcoinSeasonIndex,
+    altcoinSeasonLabel: home.altcoinSeasonLabel,
+    fearGreedValue: home.fearGreedValue,
+    fearGreedLabel: home.fearGreedLabel,
+  };
 }
 
 export function fetchSettings(): Promise<AppSettingsDto> {
