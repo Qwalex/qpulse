@@ -127,9 +127,13 @@ interface ResultsResponse {
 }
 ```
 
+### MarketMetricsDto
+
+Live dashboard metrics (total cap, altcoin season, fear & greed). Served by `GET /market-metrics` — aggregated from public providers with Redis cache; admin `HomeContent` is fallback only.
+
 ### HomeContentDto
 
-Market metrics (total cap, altcoin season, fear & greed), socialLinks array. Admin-managed; no external market API in Phase 1.
+Market metrics fields remain for admin fallback and legacy clients; **new mobile** reads metrics from `MarketMetricsDto` via `/market-metrics`. `socialLinks` array is admin-managed.
 
 ### AppSettingsDto
 

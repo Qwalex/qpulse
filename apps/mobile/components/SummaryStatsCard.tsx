@@ -1,34 +1,66 @@
 import { StyleSheet, Text, View } from 'react-native';
 import type { ResultsSummaryDto } from '@qpulse/shared';
-import { colors, radii, spacing } from '@/constants/theme';
+import { radii, spacing } from '@/constants/theme';
+import { useAppStore } from '@/store/useAppStore';
 
 interface SummaryStatsCardProps {
   summary: ResultsSummaryDto;
 }
 
-function StatItem({ label, value, accent }: { label: string; value: string; accent?: string }) {
+function StatItem({
+  label,
+  value,
+  accent,
+  themeColors,
+}: {
+  label: string;
+  value: string;
+  accent?: string;
+  themeColors: ReturnType<typeof useAppStore.getState>['colors'];
+}) {
   return (
-    <View style={styles.stat}>
-      <Text style={styles.statLabel}>{label}</Text>
-      <Text style={[styles.statValue, accent ? { color: accent } : null]}>{value}</Text>
+    <View style={[styles.stat, { backgroundColor: themeColors.background }]}>
+      <Text style={[styles.statLabel, { color: themeColors.textMuted }]}>{label}</Text>
+      <Text style={[styles.statValue, { color: accent ?? themeColors.text }]}>{value}</Text>
     </View>
   );
 }
 
 export function SummaryStatsCard({ summary }: SummaryStatsCardProps) {
-  const profitColor = summary.totalProfit >= 0 ? colors.success : colors.danger;
+  const themeColors = useAppStore((s) => s.colors);
+  const profitColor = summary.totalProfit >= 0 ? themeColors.success : themeColors.danger;
 
   return (
-    <View style={styles.card}>
-      <Text style={styles.title}>Statistics</Text>
+    <View
+      style={[
+        styles.card,
+        { backgroundColor: themeColors.card, borderColor: themeColors.cardBorder },
+      ]}
+    >
+      <Text style={[styles.title, { color: themeColors.text }]}>Statistics</Text>
       <View style={styles.grid}>
-        <StatItem label="Trades" value={String(summary.totalTrades)} />
-        <StatItem label="Win Rate" value={`${summary.winRate.toFixed(1)}%`} accent={colors.accent} />
-        <StatItem label="Wins" value={String(summary.winTrades)} accent={colors.success} />
-        <StatItem label="Losses" value={String(summary.lossTrades)} accent={colors.danger} />
+        <StatItem label="Trades" value={String(summary.totalTrades)} themeColors={themeColors} />
+        <StatItem
+          label="Win Rate"
+          value={`${summary.winRate.toFixed(1)}%`}
+          accent={themeColors.accent}
+          themeColors={themeColors}
+        />
+        <StatItem
+          label="Wins"
+          value={String(summary.winTrades)}
+          accent={themeColors.success}
+          themeColors={themeColors}
+        />
+        <StatItem
+          label="Losses"
+          value={String(summary.lossTrades)}
+          accent={themeColors.danger}
+          themeColors={themeColors}
+        />
       </View>
-      <View style={styles.totalRow}>
-        <Text style={styles.totalLabel}>Total profit</Text>
+      <View style={[styles.totalRow, { borderTopColor: themeColors.cardBorder }]}>
+        <Text style={[styles.totalLabel, { color: themeColors.textSecondary }]}>Total profit</Text>
         <Text style={[styles.totalValue, { color: profitColor }]}>
           {summary.totalProfit >= 0 ? '+' : ''}
           {summary.totalProfit.toFixed(2)}%
@@ -40,15 +72,12 @@ export function SummaryStatsCard({ summary }: SummaryStatsCardProps) {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: colors.card,
     borderRadius: radii.md,
     padding: spacing.md,
     marginBottom: spacing.md,
     borderWidth: 1,
-    borderColor: colors.cardBorder,
   },
   title: {
-    color: colors.text,
     fontSize: 16,
     fontWeight: '700',
     marginBottom: spacing.md,
@@ -60,16 +89,13 @@ const styles = StyleSheet.create({
   },
   stat: {
     width: '47%',
-    backgroundColor: colors.background,
     borderRadius: radii.sm,
     padding: spacing.sm,
   },
   statLabel: {
-    color: colors.textMuted,
     fontSize: 12,
   },
   statValue: {
-    color: colors.text,
     fontSize: 20,
     fontWeight: '700',
     marginTop: 2,
@@ -81,10 +107,8 @@ const styles = StyleSheet.create({
     marginTop: spacing.md,
     paddingTop: spacing.md,
     borderTopWidth: 1,
-    borderTopColor: colors.cardBorder,
   },
   totalLabel: {
-    color: colors.textSecondary,
     fontSize: 14,
   },
   totalValue: {

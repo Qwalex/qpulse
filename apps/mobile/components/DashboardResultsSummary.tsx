@@ -6,8 +6,13 @@ import { radii, spacing } from '@/constants/theme';
 import { useAppStore } from '@/store/useAppStore';
 
 interface DashboardResultsSummaryProps {
-  summary?: ResultsSummaryDto;
+  futuresSummary?: ResultsSummaryDto;
+  spotSummary?: ResultsSummaryDto;
   isLoading?: boolean;
+}
+
+function hasResults(summary?: ResultsSummaryDto): summary is ResultsSummaryDto {
+  return summary != null && summary.totalTrades > 0;
 }
 
 function MiniStat({ label, value, accent }: { label: string; value: string; accent?: string }) {
@@ -21,11 +26,54 @@ function MiniStat({ label, value, accent }: { label: string; value: string; acce
   );
 }
 
-export function DashboardResultsSummary({ summary, isLoading }: DashboardResultsSummaryProps) {
+function MarketResultsBlock({
+  marketLabel,
+  summary,
+}: {
+  marketLabel: string;
+  summary: ResultsSummaryDto;
+}) {
   const themeColors = useAppStore((s) => s.colors);
+  const profitColor = summary.totalProfit >= 0 ? themeColors.success : themeColors.danger;
 
-  const profitColor =
-    summary && summary.totalProfit >= 0 ? themeColors.success : themeColors.danger;
+  return (
+    <View style={styles.marketBlock}>
+      <Text style={[styles.marketLabel, { color: themeColors.textMuted }]}>
+        Last 3 months · {marketLabel}
+      </Text>
+      <View style={styles.grid}>
+        <MiniStat label="Trades" value={String(summary.totalTrades)} />
+        <MiniStat
+          label="Win Rate"
+          value={`${summary.winRate.toFixed(1)}%`}
+          accent={themeColors.accent}
+        />
+        <MiniStat label="Wins" value={String(summary.winTrades)} accent={themeColors.success} />
+        <MiniStat label="Losses" value={String(summary.lossTrades)} accent={themeColors.danger} />
+      </View>
+      <View style={[styles.profitRow, { borderTopColor: themeColors.cardBorder }]}>
+        <Text style={[styles.profitLabel, { color: themeColors.textSecondary }]}>Total profit</Text>
+        <Text style={[styles.profitValue, { color: profitColor }]}>
+          {summary.totalProfit >= 0 ? '+' : ''}
+          {summary.totalProfit.toFixed(2)}%
+        </Text>
+      </View>
+    </View>
+  );
+}
+
+export function DashboardResultsSummary({
+  futuresSummary,
+  spotSummary,
+  isLoading,
+}: DashboardResultsSummaryProps) {
+  const themeColors = useAppStore((s) => s.colors);
+  const showFutures = hasResults(futuresSummary);
+  const showSpot = hasResults(spotSummary);
+
+  if (!isLoading && !showFutures && !showSpot) {
+    return null;
+  }
 
   return (
     <View
@@ -39,37 +87,18 @@ export function DashboardResultsSummary({ summary, isLoading }: DashboardResults
           <Ionicons name="bar-chart-outline" size={18} color={themeColors.accent} />
           <Text style={[styles.title, { color: themeColors.text }]}>Signal Results</Text>
         </View>
-        <Text style={[styles.subtitle, { color: themeColors.textMuted }]}>Last 3 months · Spot</Text>
       </View>
 
       {isLoading ? (
         <ActivityIndicator color={themeColors.accent} style={styles.loader} />
-      ) : summary ? (
-        <>
-          <View style={styles.grid}>
-            <MiniStat label="Trades" value={String(summary.totalTrades)} />
-            <MiniStat
-              label="Win Rate"
-              value={`${summary.winRate.toFixed(1)}%`}
-              accent={themeColors.accent}
-            />
-            <MiniStat label="Wins" value={String(summary.winTrades)} accent={themeColors.success} />
-            <MiniStat label="Losses" value={String(summary.lossTrades)} accent={themeColors.danger} />
-          </View>
-          <View style={[styles.profitRow, { borderTopColor: themeColors.cardBorder }]}>
-            <Text style={[styles.profitLabel, { color: themeColors.textSecondary }]}>
-              Total profit
-            </Text>
-            <Text style={[styles.profitValue, { color: profitColor }]}>
-              {summary.totalProfit >= 0 ? '+' : ''}
-              {summary.totalProfit.toFixed(2)}%
-            </Text>
-          </View>
-        </>
       ) : (
-        <Text style={[styles.emptyText, { color: themeColors.textMuted }]}>
-          Results data unavailable
-        </Text>
+        <>
+          {showFutures && <MarketResultsBlock marketLabel="Futures" summary={futuresSummary} />}
+          {showFutures && showSpot && (
+            <View style={[styles.divider, { backgroundColor: themeColors.cardBorder }]} />
+          )}
+          {showSpot && <MarketResultsBlock marketLabel="Spot" summary={spotSummary} />}
+        </>
       )}
 
       <Link href="/results" asChild>
@@ -106,13 +135,20 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
   },
-  subtitle: {
-    fontSize: 12,
-    marginTop: 2,
-    marginLeft: 26,
-  },
   loader: {
     marginVertical: spacing.lg,
+  },
+  marketBlock: {
+    marginBottom: spacing.sm,
+  },
+  marketLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    marginBottom: spacing.sm,
+  },
+  divider: {
+    height: 1,
+    marginVertical: spacing.md,
   },
   grid: {
     flexDirection: 'row',
@@ -147,11 +183,6 @@ const styles = StyleSheet.create({
   profitValue: {
     fontSize: 22,
     fontWeight: '700',
-  },
-  emptyText: {
-    fontSize: 13,
-    textAlign: 'center',
-    marginVertical: spacing.md,
   },
   button: {
     flexDirection: 'row',

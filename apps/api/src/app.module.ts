@@ -14,6 +14,8 @@ import { ResultsModule } from './results/results.module';
 
 import { HomeContentModule } from './home-content/home-content.module';
 
+import { MarketMetricsModule } from './market-metrics/market-metrics.module';
+
 import { SettingsModule } from './settings/settings.module';
 
 import { ReviewsModule } from './reviews/reviews.module';
@@ -73,6 +75,8 @@ import { ClientErrorsModule } from './client-errors/client-errors.module';
     ResultsModule,
 
     HomeContentModule,
+
+    MarketMetricsModule,
 
     SettingsModule,
 

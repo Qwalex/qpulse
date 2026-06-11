@@ -40,7 +40,7 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   expandedSignalIds: new Set<string>(),
 
-  resultsMarket: MarketType.SPOT,
+  resultsMarket: MarketType.FUTURES,
 
   isDarkMode: true,
 

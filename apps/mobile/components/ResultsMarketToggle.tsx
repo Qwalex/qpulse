@@ -1,6 +1,7 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { MarketType } from '@qpulse/shared';
-import { colors, radii, spacing } from '@/constants/theme';
+import { radii, spacing } from '@/constants/theme';
+import { useAppStore } from '@/store/useAppStore';
 
 interface ResultsMarketToggleProps {
   value: MarketType;
@@ -8,22 +9,37 @@ interface ResultsMarketToggleProps {
 }
 
 const OPTIONS: { key: MarketType; label: string }[] = [
-  { key: MarketType.SPOT, label: 'Spot' },
   { key: MarketType.FUTURES, label: 'Futures' },
+  { key: MarketType.SPOT, label: 'Spot' },
 ];
 
 export function ResultsMarketToggle({ value, onChange }: ResultsMarketToggleProps) {
+  const themeColors = useAppStore((s) => s.colors);
+
   return (
-    <View style={styles.container}>
+    <View
+      style={[
+        styles.container,
+        { backgroundColor: themeColors.card, borderColor: themeColors.cardBorder },
+      ]}
+    >
       {OPTIONS.map((option) => {
         const active = value === option.key;
         return (
           <Pressable
             key={option.key}
-            style={[styles.tab, active && styles.tabActive]}
+            style={[styles.tab, active && { backgroundColor: themeColors.accent }]}
             onPress={() => onChange(option.key)}
           >
-            <Text style={[styles.tabText, active && styles.tabTextActive]}>{option.label}</Text>
+            <Text
+              style={[
+                styles.tabText,
+                { color: themeColors.textSecondary },
+                active && { color: themeColors.textOnAccent },
+              ]}
+            >
+              {option.label}
+            </Text>
           </Pressable>
         );
       })}
@@ -34,12 +50,10 @@ export function ResultsMarketToggle({ value, onChange }: ResultsMarketToggleProp
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
-    backgroundColor: colors.card,
     borderRadius: radii.md,
     padding: 4,
     marginBottom: spacing.md,
     borderWidth: 1,
-    borderColor: colors.cardBorder,
   },
   tab: {
     flex: 1,
@@ -47,15 +61,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderRadius: radii.sm,
   },
-  tabActive: {
-    backgroundColor: colors.accent,
-  },
   tabText: {
-    color: colors.textSecondary,
     fontSize: 14,
     fontWeight: '600',
-  },
-  tabTextActive: {
-    color: colors.text,
   },
 });

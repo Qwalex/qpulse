@@ -11,7 +11,13 @@ import {
 import { useQuery } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
 import { MarketType } from '@qpulse/shared';
-import { fetchHomeContent, fetchResults, fetchSettings } from '@/lib/api';
+import {
+  fetchHomeContent,
+  fetchMarketMetrics,
+  fetchResults,
+  fetchSettings,
+  homeContentToMarketMetrics,
+} from '@/lib/api';
 import { RiskBanner } from '@/components/RiskBanner';
 import { TabScreen } from '@/components/TabScreen';
 import { TelegramFab } from '@/components/TelegramFab';
@@ -29,21 +35,36 @@ export default function HomeScreen() {
     queryFn: fetchHomeContent,
   });
 
+  const metricsQuery = useQuery({
+    queryKey: ['market-metrics'],
+    queryFn: fetchMarketMetrics,
+    staleTime: 5 * 60_000,
+    retry: 1,
+  });
+
   const settingsQuery = useQuery({
     queryKey: ['settings'],
     queryFn: fetchSettings,
   });
 
-  const resultsQuery = useQuery({
+  const futuresResultsQuery = useQuery({
+    queryKey: ['results', MarketType.FUTURES, '3M', 'dashboard'],
+    queryFn: () => fetchResults(MarketType.FUTURES, '3M'),
+  });
+
+  const spotResultsQuery = useQuery({
     queryKey: ['results', MarketType.SPOT, '3M', 'dashboard'],
     queryFn: () => fetchResults(MarketType.SPOT, '3M'),
   });
 
   const isLoading = homeQuery.isLoading;
+  const resultsLoading = futuresResultsQuery.isLoading || spotResultsQuery.isLoading;
 
   const onRefresh = () => {
     void homeQuery.refetch();
-    void resultsQuery.refetch();
+    void metricsQuery.refetch();
+    void futuresResultsQuery.refetch();
+    void spotResultsQuery.refetch();
   };
 
   if (isLoading) {
@@ -64,6 +85,7 @@ export default function HomeScreen() {
 
   const home = homeQuery.data!;
   const settings = settingsQuery.data;
+  const metrics = metricsQuery.data ?? homeContentToMarketMetrics(home);
 
   return (
     <TabScreen style={{ backgroundColor: themeColors.background }}>
@@ -72,7 +94,12 @@ export default function HomeScreen() {
         contentContainerStyle={styles.content}
         refreshControl={
           <RefreshControl
-            refreshing={homeQuery.isRefetching || resultsQuery.isRefetching}
+            refreshing={
+              homeQuery.isRefetching ||
+              metricsQuery.isRefetching ||
+              futuresResultsQuery.isRefetching ||
+              spotResultsQuery.isRefetching
+            }
             onRefresh={onRefresh}
             tintColor={themeColors.accent}
           />
@@ -98,11 +125,12 @@ export default function HomeScreen() {
           </View>
         )}
 
-        <MarketMetricsSection home={home} />
+        <MarketMetricsSection metrics={metrics} />
 
         <DashboardResultsSummary
-          summary={resultsQuery.data?.summary}
-          isLoading={resultsQuery.isLoading}
+          futuresSummary={futuresResultsQuery.data?.summary}
+          spotSummary={spotResultsQuery.data?.summary}
+          isLoading={resultsLoading}
         />
       </ScrollView>
 

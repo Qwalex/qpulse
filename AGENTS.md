@@ -19,7 +19,7 @@
 
 ## Non-negotiable rules
 
-- **Нет внешних market API** (CoinGecko, Alternative.me и т.п.) — все данные из PostgreSQL через админку.
+- **Нет внешних market API** в mobile/admin напрямую — исключение: `apps/api/src/market-metrics` (CoinGecko, Alternative.me, CMC trial) с Redis-кэшем; mobile читает `GET /market-metrics`.
 - **Signal CRUD только в admin** — статусы `OPEN` / `ACTIVE` / `CLOSED` / `CANCELLED`; флаг `liquidated` для закрытия по ликвидации; `CANCELLED` скрыт от mobile.
 - **Menu items** → модель `MenuLink`; social links на Home → `HomeContent.socialLinks` (без WhatsApp).
 - **Push token** → только `POST /devices/register`. WebSocket — только subscribe/broadcast.

@@ -33,6 +33,30 @@ GET /home-content
 
 Legacy `btc*` / `ticker` fields are kept for older mobile builds; new clients should use `totalMarketCap*` and `altcoinSeason*`.
 
+Mobile dashboard **market metrics** (cap, altcoin season, fear & greed) come from `GET /market-metrics`, not from admin `HomeContent` fields.
+
+### Market metrics
+
+```
+GET /market-metrics
+```
+
+**Response:** `MarketMetricsDto`
+
+```json
+{
+  "totalMarketCap": "$2.84T",
+  "totalMarketCapChange24h": 1.8,
+  "altcoinSeasonIndex": 38,
+  "altcoinSeasonLabel": "Bitcoin Season",
+  "fearGreedValue": 72,
+  "fearGreedLabel": "Greed"
+}
+```
+
+- Aggregated server-side from public providers (CoinGecko global + top-100 30d performance for Altcoin Season proxy, Alternative.me Fear & Greed)
+- Redis cache TTL ~10 min; fallback to stale cache or admin `HomeContent` on provider errors
+
 ### Signals
 
 ```

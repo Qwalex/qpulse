@@ -19,7 +19,7 @@ alwaysApply: true
 
 ## Forbidden
 
-- External market APIs (CoinGecko, Alternative.me)
+- External market APIs in mobile/admin (exception: `apps/api/src/market-metrics` only)
 - Mock JSON files in Phase 1 — use Prisma + seed
 - Duplicating types outside `packages/shared`
 - Hardcoding menu items in mobile — use `MenuLink`
