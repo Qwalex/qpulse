@@ -161,7 +161,7 @@ export function MarketMetricsSection({ metrics }: MarketMetricsSectionProps) {
         <IndexGauge
           label="Altcoin Season"
           value={Number(metrics.altcoinSeasonIndex ?? 0)}
-          subtitle={`${metrics.altcoinSeasonLabel ?? '—'} · 90d`}
+          subtitle={metrics.altcoinSeasonLabel ?? '—'}
           color={asColor}
           icon="layers-outline"
         />

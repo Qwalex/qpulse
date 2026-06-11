@@ -66,6 +66,46 @@ export function altcoinSeasonLabel(index: number): string {
   return 'Mixed Market';
 }
 
+export interface AltcoinMarketRow {
+  id: string;
+  price_change_percentage_30d?: number | null;
+  price_change_percentage_30d_in_currency?: number | null;
+}
+
+export function coin30dChange(row: AltcoinMarketRow): number | null {
+  const change = row.price_change_percentage_30d_in_currency ?? row.price_change_percentage_30d;
+  return change == null ? null : change;
+}
+
+export function computeAltcoinSeasonFrom30dMarkets(
+  markets: AltcoinMarketRow[],
+  excludedIds: ReadonlySet<string>,
+  topN = 50,
+): { index: number; sampleSize: number } {
+  const btc = markets.find((row) => row.id === 'bitcoin');
+  const btcChange = coin30dChange(btc ?? { id: 'bitcoin' }) ?? 0;
+
+  const alts = markets
+    .filter(
+      (row) =>
+        row.id !== 'bitcoin' && !excludedIds.has(row.id) && coin30dChange(row) != null,
+    )
+    .slice(0, topN);
+
+  if (alts.length === 0) {
+    throw new Error('No altcoins with 30d performance data');
+  }
+
+  const outperforming = alts.filter(
+    (row) => (coin30dChange(row) ?? -Infinity) > btcChange,
+  ).length;
+
+  return {
+    index: Math.max(0, Math.min(100, Math.round((outperforming / alts.length) * 100))),
+    sampleSize: alts.length,
+  };
+}
+
 export function mapHomeContentToMetrics(content: {
   totalMarketCap: string;
   totalMarketCapChange24h: number;
