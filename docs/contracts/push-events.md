@@ -100,6 +100,21 @@ GET   /admin/notifications/log
 
 MVP: templates seeded; UI editor — backlog.
 
+## Price alerts (device-scoped)
+
+Separate from `SignalEventType` / signal BullMQ jobs.
+
+| Trigger | Push title | Android channel |
+|---------|------------|-----------------|
+| Manual alert hit | Price Alert | `price_alerts` |
+| Signal entry hit | Entry Price Hit | `price_alerts` |
+
+Delivery: `PriceAlertPushService` → Expo Push API → tokens where `DeviceToken.deviceId` matches alert owner.
+
+Logged in `PriceAlertLog` (`sent` / `failed` / `skipped`).
+
+Conditions: `ABOVE`, `BELOW`, `AT` (entry uses `AT` with 0.05% tolerance).
+
 ## Adding a new event type
 
 See runbook: [add-signal-event.md](../runbooks/add-signal-event.md).

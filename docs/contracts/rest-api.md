@@ -192,6 +192,27 @@ DELETE /devices/unregister
 
 > Единственный способ регистрации push token. WS не используется для tokens.
 
+### Price watch
+
+```
+GET    /price-watch?deviceId=<device-id>
+POST   /price-watch/watchlist
+DELETE /price-watch/watchlist/:id?deviceId=<device-id>
+POST   /price-watch/alerts
+DELETE /price-watch/alerts/:id?deviceId=<device-id>
+POST   /price-watch/alerts/from-signal
+```
+
+**GET response:** `PriceWatchStateDto` — `watchlist` (max 10), active `alerts`, snapshot `tickers`.
+
+**POST watchlist body:** `{ "deviceId": "...", "pair": "BTC/USDT", "marketType": "FUTURES" | "SPOT" }`
+
+**POST alerts body:** `{ "deviceId", "pair", "marketType", "targetPrice", "condition": "ABOVE" | "BELOW" | "AT" }`
+
+**POST alerts/from-signal body:** `{ "deviceId", "signalId" }` — creates `AT` alert on signal `entryPrice`.
+
+Prices streamed server-side from **Bybit public API**; mobile receives live ticks via WS `price:ticker` on channel `prices:device:{deviceId}`.
+
 ---
 
 ## Integration endpoints (signalsBot / external)

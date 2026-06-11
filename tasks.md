@@ -16,6 +16,21 @@ _(пусто)_
 
 ## Done (recent)
 
+## [TASK-023] Coin price tracking (Watch tab)
+- **Status:** done
+- **Assignee:** agent
+- **Priority:** P1
+- **Scope:** packages/shared, apps/api/price-watch, apps/mobile, docs/contracts, AGENTS.md
+- **Description:** Watchlist до 10 монет, price alerts с push, вкладка Watch, виджет Home, Track entry на сигналах, Bybit WS feed.
+- **Acceptance criteria:**
+  - [x] Prisma + REST /price-watch + Bybit feed
+  - [x] WS price:ticker на prices:device:{deviceId}
+  - [x] Device-scoped price alert push
+  - [x] Mobile Watch tab + TrackedCoinsWidget + SignalCard Track entry
+  - [x] Contracts + typecheck
+- **Notes:** CMC/CG не подходят для free realtime WS; используется Bybit public v5.
+- **Updated:** 2026-06-11
+
 ## [TASK-022] Home: profit emulation under Signal Results
 - **Status:** done
 - **Assignee:** agent

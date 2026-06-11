@@ -46,6 +46,19 @@ Notifications.setNotificationHandler({
 
 
 
+async function ensureNotificationChannels() {
+  if (Platform.OS === 'android') {
+    await Notifications.setNotificationChannelAsync('price_alerts', {
+      name: 'Price Alerts',
+      importance: Notifications.AndroidImportance.HIGH,
+      vibrationPattern: [0, 250, 250, 250],
+      lightColor: '#3B82F6',
+    });
+  }
+}
+
+
+
 const queryClient = createAppQueryClient();
 
 
@@ -134,6 +147,7 @@ function resolveDeepLinkRoute(deepLink: unknown): string | null {
 
   if (deepLink.startsWith('/')) return deepLink;
 
+  if (deepLink.includes('watch')) return '/(tabs)/watch';
   if (deepLink.includes('results')) return '/results';
 
   if (deepLink.includes('futures')) return '/(tabs)/futures';
@@ -155,6 +169,8 @@ export default function RootLayout() {
 
 
   useEffect(() => {
+
+    void ensureNotificationChannels();
 
     registerForPushNotifications().catch(() => undefined);
 

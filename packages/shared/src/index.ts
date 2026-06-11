@@ -1,7 +1,5 @@
-export enum MarketType {
-  SPOT = 'SPOT',
-  FUTURES = 'FUTURES',
-}
+export { MarketType } from './market-type';
+import type { MarketType } from './market-type';
 
 export enum Direction {
   LONG = 'LONG',
@@ -259,3 +257,20 @@ export type {
   ProfitEmulationProjection,
   ResultsSummaryProfitInput,
 } from './profit-emulation.util';
+export {
+  PriceAlertCondition,
+  PriceAlertSource,
+  WATCHLIST_MAX,
+  PRICE_DEVICE_CHANNEL_PREFIX,
+  priceDeviceChannel,
+} from './price-watch.types';
+export type {
+  WatchlistCoinDto,
+  PriceAlertDto,
+  PriceTickerDto,
+  PriceWatchStateDto,
+  AddWatchlistCoinDto,
+  CreatePriceAlertDto,
+  CreateEntryAlertFromSignalDto,
+} from './price-watch.types';
+export { pairToBybitSymbol, bybitSymbolToPairLabel } from './pair-symbol.util';

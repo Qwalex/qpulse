@@ -55,6 +55,17 @@ enum ClientErrorKind {
   JSON
 }
 
+enum PriceAlertCondition {
+  ABOVE
+  BELOW
+  AT
+}
+
+enum PriceAlertSource {
+  MANUAL
+  SIGNAL_ENTRY
+}
+
 model Signal {
   id                String       @id @default(uuid())
   /// Id сигнала во внешней системе (signalsBot Signal.id).
@@ -185,4 +196,49 @@ model ClientErrorReport {
 
   @@index([createdAt])
   @@index([kind, createdAt])
+}
+
+model WatchlistCoin {
+  id         String     @id @default(uuid())
+  deviceId   String
+  symbol     String
+  pairLabel  String
+  marketType MarketType
+  sortOrder  Int        @default(0)
+  createdAt  DateTime   @default(now())
+
+  @@unique([deviceId, symbol, marketType])
+  @@index([deviceId, sortOrder])
+}
+
+model PriceAlert {
+  id          String              @id @default(uuid())
+  deviceId    String
+  symbol      String
+  pairLabel   String
+  marketType  MarketType
+  targetPrice Decimal
+  condition   PriceAlertCondition
+  source      PriceAlertSource    @default(MANUAL)
+  signalId    String?
+  isActive    Boolean             @default(true)
+  triggeredAt DateTime?
+  lastPrice   Decimal?
+  createdAt   DateTime            @default(now())
+
+  @@index([deviceId, isActive])
+  @@index([isActive, symbol, marketType])
+}
+
+model PriceAlertLog {
+  id        String   @id @default(uuid())
+  deviceId  String?
+  alertId   String?
+  title     String
+  body      String
+  status    String
+  error     String?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
 }

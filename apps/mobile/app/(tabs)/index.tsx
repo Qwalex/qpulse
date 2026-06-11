@@ -25,6 +25,8 @@ import { QueryErrorView } from '@/components/QueryErrorView';
 import { MarketMetricsSection } from '@/components/MarketMetricsSection';
 import { DashboardResultsSummary } from '@/components/DashboardResultsSummary';
 import { ProfitEmulationCard } from '@/components/ProfitEmulationCard';
+import { TrackedCoinsWidget } from '@/components/TrackedCoinsWidget';
+import { useDevicePriceWatch } from '@/hooks/useDevicePriceWatch';
 import { useAppStore } from '@/store/useAppStore';
 import { radii, spacing } from '@/constants/theme';
 
@@ -105,6 +107,7 @@ export default function HomeScreen() {
   const telegramFromSocial = home.socialLinks?.find(isTelegramLink);
   const telegramUrl = telegramFromSocial?.url ?? settings?.telegramFabUrl ?? null;
   const otherSocialLinks = (home.socialLinks ?? []).filter((link) => !isTelegramLink(link));
+  const { priceWatchQuery } = useDevicePriceWatch();
 
   return (
     <TabScreen style={{ backgroundColor: themeColors.background }}>
@@ -162,6 +165,11 @@ export default function HomeScreen() {
           futuresSummary={futuresResultsQuery.data?.summary}
           spotSummary={spotResultsQuery.data?.summary}
           isLoading={resultsLoading}
+        />
+
+        <TrackedCoinsWidget
+          watchlist={priceWatchQuery.data?.watchlist ?? []}
+          state={priceWatchQuery.data}
         />
       </ScrollView>
 

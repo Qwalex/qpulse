@@ -96,6 +96,33 @@ PK: `eventType`. One template per SignalEventType.
 | priority | String |
 | deepLink | String |
 
+### Review
+
+| deviceId | String? unique — one review per device |
+
+### WatchlistCoin
+
+| Field | Type |
+|-------|------|
+| deviceId | String |
+| symbol | String (Bybit, e.g. BTCUSDT) |
+| pairLabel | String (display, e.g. BTC/USDT) |
+| marketType | MarketType |
+| sortOrder | Int |
+
+Unique: `[deviceId, symbol, marketType]`. Max 10 per device (API enforced).
+
+### PriceAlert
+
+| Field | Type |
+|-------|------|
+| targetPrice | Decimal |
+| condition | PriceAlertCondition (`ABOVE` \| `BELOW` \| `AT`) |
+| source | PriceAlertSource (`MANUAL` \| `SIGNAL_ENTRY`) |
+| signalId | String? |
+| isActive | Boolean |
+| lastPrice | Decimal? (for cross detection) |
+
 ### HomeContent
 
 Singleton (`id = "default"`). All Home screen data from admin.

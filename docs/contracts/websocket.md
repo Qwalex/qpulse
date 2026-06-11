@@ -34,6 +34,7 @@ Event name: `subscribe`
 | `signals:spot` | SPOT market signals |
 | `signals:futures` | FUTURES market signals |
 | `signals:all` | All markets |
+| `prices:device:{deviceId}` | Live price ticks for device watchlist/alerts |
 
 **Response:** `{ "ok": true }`
 
@@ -88,6 +89,26 @@ Semantic event (for toast/badge logic). One dominant event per update (see push-
   }
 }
 ```
+
+### price:ticker
+
+Live price update for watchlist / alerts (Bybit feed via API).
+
+```json
+{
+  "type": "price:ticker",
+  "payload": {
+    "symbol": "BTCUSDT",
+    "pairLabel": "BTC/USDT",
+    "marketType": "FUTURES",
+    "price": 63000.5,
+    "change24hPct": 2.1,
+    "updatedAt": "2026-06-11T12:00:00.000Z"
+  }
+}
+```
+
+Subscribe to `prices:device:{deviceId}` after resolving local `deviceId`.
 
 ## Multi-instance scaling
 

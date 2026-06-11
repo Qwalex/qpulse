@@ -16,20 +16,15 @@ import {
 
 } from 'react-native';
 
-import { useQuery } from '@tanstack/react-query';
-
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { Link } from 'expo-router';
-
 import { MarketType } from '@qpulse/shared';
-
 import { fetchSignals, fetchSettings } from '@/lib/api';
-
 import { SignalCard } from '@/components/SignalCard';
-
 import { TelegramFab } from '@/components/TelegramFab';
-
 import { QueryErrorView } from '@/components/QueryErrorView';
 import { TabScreen } from '@/components/TabScreen';
+import { useDevicePriceWatch } from '@/hooks/useDevicePriceWatch';
 
 import { useAppStore } from '@/store/useAppStore';
 
@@ -61,7 +56,13 @@ export default function FuturesScreen() {
 
   });
 
+  const { trackedSignalIds, trackSignalEntry } = useDevicePriceWatch();
 
+  const trackEntryMutation = useMutation({
+
+    mutationFn: (signalId: string) => trackSignalEntry(signalId),
+
+  });
 
   const signals = signalsQuery.data ?? [];
 
@@ -135,8 +136,16 @@ export default function FuturesScreen() {
 
         }
 
-        renderItem={({ item }) => <SignalCard signal={item} />}
-
+        renderItem={({ item }) => (
+          <SignalCard
+            signal={item}
+            isTrackingEntry={trackedSignalIds.has(item.id)}
+            onTrackEntry={() => trackEntryMutation.mutate(item.id)}
+            trackEntryPending={
+              trackEntryMutation.isPending && trackEntryMutation.variables === item.id
+            }
+          />
+        )}
         contentContainerStyle={styles.listContent}
 
         ListEmptyComponent={

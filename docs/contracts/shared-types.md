@@ -144,6 +144,10 @@ Live dashboard metrics (total cap, 24h cap chart, altcoin season, fear & greed).
 
 Market metrics fields remain for admin fallback and legacy clients; **new mobile** reads metrics from `MarketMetricsDto` via `/market-metrics`. `socialLinks` array is admin-managed.
 
+### Price watch DTOs
+
+`PriceWatchStateDto`, `WatchlistCoinDto`, `PriceAlertDto`, `PriceTickerDto`, enums `PriceAlertCondition`, `PriceAlertSource`, `WATCHLIST_MAX = 10`, helpers `pairToBybitSymbol`, `priceDeviceChannel`.
+
 ### AppSettingsDto
 
 ```typescript

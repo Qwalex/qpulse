@@ -4,13 +4,16 @@ import type {
   HomeContentDto,
   MarketMetricsDto,
   MenuLinkDto,
+  PriceAlertDto,
+  PriceWatchStateDto,
   ResultsResponse,
   ReviewCreateDto,
   ReviewDto,
   ReviewMineResponse,
   SignalDto,
+  WatchlistCoinDto,
 } from '@qpulse/shared';
-import { ClientErrorKind, MarketType } from '@qpulse/shared';
+import { ClientErrorKind, MarketType, PriceAlertCondition } from '@qpulse/shared';
 import { getApiBasePath as buildApiBasePath, getRealtimeBaseUrl, normalizeBaseUrl, resolveApiUrl } from '@/lib/api-base';
 import { reportRequestError } from '@/lib/client-error-report';
 
@@ -177,4 +180,57 @@ export function unregisterDevice(pushToken: string): Promise<void> {
   });
 }
 
-export { MarketType };
+export function fetchPriceWatchState(deviceId: string): Promise<PriceWatchStateDto> {
+  const q = new URLSearchParams({ deviceId });
+  return request<PriceWatchStateDto>(`/price-watch?${q.toString()}`);
+}
+
+export function addWatchlistCoin(
+  deviceId: string,
+  pair: string,
+  marketType: MarketType,
+): Promise<WatchlistCoinDto> {
+  return request<WatchlistCoinDto>('/price-watch/watchlist', {
+    method: 'POST',
+    body: JSON.stringify({ deviceId, pair, marketType }),
+  });
+}
+
+export function removeWatchlistCoin(id: string, deviceId: string): Promise<{ ok: boolean }> {
+  const q = new URLSearchParams({ deviceId });
+  return request<{ ok: boolean }>(`/price-watch/watchlist/${id}?${q.toString()}`, {
+    method: 'DELETE',
+  });
+}
+
+export function createPriceAlert(
+  deviceId: string,
+  pair: string,
+  marketType: MarketType,
+  targetPrice: number,
+  condition: PriceAlertCondition,
+): Promise<PriceAlertDto> {
+  return request<PriceAlertDto>('/price-watch/alerts', {
+    method: 'POST',
+    body: JSON.stringify({ deviceId, pair, marketType, targetPrice, condition }),
+  });
+}
+
+export function createEntryAlertFromSignal(
+  deviceId: string,
+  signalId: string,
+): Promise<PriceAlertDto> {
+  return request<PriceAlertDto>('/price-watch/alerts/from-signal', {
+    method: 'POST',
+    body: JSON.stringify({ deviceId, signalId }),
+  });
+}
+
+export function deletePriceAlert(id: string, deviceId: string): Promise<{ ok: boolean }> {
+  const q = new URLSearchParams({ deviceId });
+  return request<{ ok: boolean }>(`/price-watch/alerts/${id}?${q.toString()}`, {
+    method: 'DELETE',
+  });
+}
+
+export { MarketType, PriceAlertCondition };

@@ -40,6 +40,8 @@ import { IntegrationsModule } from './integrations/integrations.module';
 
 import { ClientErrorsModule } from './client-errors/client-errors.module';
 
+import { PriceWatchModule } from './price-watch/price-watch.module';
+
 
 
 @Module({
@@ -89,6 +91,8 @@ import { ClientErrorsModule } from './client-errors/client-errors.module';
     IntegrationsModule,
 
     ClientErrorsModule,
+
+    PriceWatchModule,
 
     HealthModule,
 

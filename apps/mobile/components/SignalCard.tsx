@@ -16,6 +16,9 @@ function resolveSignalColor(signal: SignalDto, themeColors: ThemeColors): string
 
 interface SignalCardProps {
   signal: SignalDto;
+  isTrackingEntry?: boolean;
+  onTrackEntry?: () => void;
+  trackEntryPending?: boolean;
 }
 
 function formatDate(iso: string): string {
@@ -31,7 +34,12 @@ function formatPrice(value: number): string {
   return value >= 1 ? value.toLocaleString('en-US', { maximumFractionDigits: 4 }) : value.toPrecision(4);
 }
 
-export function SignalCard({ signal }: SignalCardProps) {
+export function SignalCard({
+  signal,
+  isTrackingEntry,
+  onTrackEntry,
+  trackEntryPending,
+}: SignalCardProps) {
   const themeColors = useAppStore((s) => s.colors);
   const expanded = useAppStore((s) => s.expandedSignalIds.has(signal.id));
   const toggleExpanded = useAppStore((s) => s.toggleExpanded);
@@ -134,6 +142,44 @@ export function SignalCard({ signal }: SignalCardProps) {
         </View>
       )}
 
+      {(signal.status === SignalStatus.OPEN || signal.status === SignalStatus.ACTIVE) &&
+        onTrackEntry && (
+          <Pressable
+            style={[
+              styles.trackBtn,
+              {
+                backgroundColor: isTrackingEntry
+                  ? themeColors.success + '22'
+                  : themeColors.accent + '18',
+                borderColor: isTrackingEntry ? themeColors.success : themeColors.accent,
+              },
+            ]}
+            onPress={(event) => {
+              event.stopPropagation();
+              if (!isTrackingEntry) onTrackEntry();
+            }}
+            disabled={isTrackingEntry || trackEntryPending}
+          >
+            <Ionicons
+              name={isTrackingEntry ? 'checkmark-circle' : 'notifications-outline'}
+              size={16}
+              color={isTrackingEntry ? themeColors.success : themeColors.accent}
+            />
+            <Text
+              style={[
+                styles.trackBtnText,
+                { color: isTrackingEntry ? themeColors.success : themeColors.accent },
+              ]}
+            >
+              {trackEntryPending
+                ? 'Setting up…'
+                : isTrackingEntry
+                  ? 'Tracking entry'
+                  : 'Track entry'}
+            </Text>
+          </Pressable>
+        )}
+
       <View style={styles.expandHint}>
         <Text style={[styles.expandText, { color: themeColors.textMuted }]}>
           {expanded ? 'Collapse' : 'Details'}
@@ -223,6 +269,20 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 4,
     marginTop: spacing.sm,
+  },
+  trackBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.xs,
+    marginTop: spacing.sm,
+    paddingVertical: spacing.sm,
+    borderRadius: radii.sm,
+    borderWidth: 1,
+  },
+  trackBtnText: {
+    fontSize: 13,
+    fontWeight: '700',
   },
   expandText: {
     fontSize: 12,

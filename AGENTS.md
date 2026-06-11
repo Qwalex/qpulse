@@ -19,7 +19,7 @@
 
 ## Non-negotiable rules
 
-- **Нет внешних market API** в mobile/admin напрямую — исключение: `apps/api/src/market-metrics` (CoinGecko, Alternative.me, CMC trial) с Redis-кэшем; mobile читает `GET /market-metrics`.
+- **Нет внешних market API** в mobile/admin напрямую — исключения: `apps/api/src/market-metrics` (CoinGecko, Alternative.me, CMC) и `apps/api/src/price-watch` (Bybit public WS + REST) с Redis/WS proxy; mobile читает `GET /market-metrics` и `GET /price-watch`.
 - **Signal CRUD только в admin** — статусы `OPEN` / `ACTIVE` / `CLOSED` / `CANCELLED`; флаг `liquidated` для закрытия по ликвидации; `CANCELLED` скрыт от mobile.
 - **Menu items** → модель `MenuLink`; social links на Home → `HomeContent.socialLinks` (без WhatsApp).
 - **Push token** → только `POST /devices/register`. WebSocket — только subscribe/broadcast.
