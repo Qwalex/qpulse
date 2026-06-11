@@ -107,6 +107,11 @@ export interface ResultsResponse {
   signals: SignalDto[];
 }
 
+export interface MarketCapChartPoint {
+  timestamp: number;
+  valueUsd: number;
+}
+
 export interface MarketMetricsDto {
   totalMarketCap: string;
   totalMarketCapChange24h: number;
@@ -114,6 +119,8 @@ export interface MarketMetricsDto {
   altcoinSeasonLabel: string;
   fearGreedValue: number;
   fearGreedLabel: string;
+  /** 24h total market cap series (scaled from CoinGecko BTC market cap shape). */
+  marketCapChart24h?: MarketCapChartPoint[];
 }
 
 export interface HomeContentDto {

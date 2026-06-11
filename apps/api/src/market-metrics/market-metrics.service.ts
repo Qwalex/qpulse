@@ -5,11 +5,13 @@ import Redis from 'ioredis';
 import { PrismaService } from '../prisma/prisma.service';
 import {
   altcoinSeasonLabel,
+  downsampleMarketCapChart,
   formatMarketCapUsd,
   mapHomeContentToMetrics,
+  scaleBtcMarketCapChart,
 } from './market-metrics.mapper';
 
-const CACHE_KEY = 'qpulse:market-metrics:v2';
+const CACHE_KEY = 'qpulse:market-metrics:v3';
 const CACHE_TTL_SEC = 600;
 
 const EXCLUDED_COIN_IDS = new Set([
@@ -46,6 +48,10 @@ interface CoinGeckoMarketRow {
   symbol: string;
   price_change_percentage_30d?: number | null;
   price_change_percentage_30d_in_currency?: number | null;
+}
+
+interface CoinGeckoMarketChartResponse {
+  market_caps?: Array<[number, number]>;
 }
 
 function coin30dChange(row: CoinGeckoMarketRow): number | null {
@@ -135,6 +141,7 @@ export class MarketMetricsService implements OnModuleDestroy {
     }
 
     let altcoinSeasonIndex = 50;
+    let marketCapChart24h: MarketMetricsDto['marketCapChart24h'];
     try {
       await sleep(300);
       const marketsJson = await this.fetchJson<CoinGeckoMarketRow[]>(
@@ -148,6 +155,20 @@ export class MarketMetricsService implements OnModuleDestroy {
       );
     }
 
+    try {
+      await sleep(300);
+      const chartJson = await this.fetchJson<CoinGeckoMarketChartResponse>(
+        'https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=1',
+        'CoinGecko BTC market chart',
+      );
+      const scaled = scaleBtcMarketCapChart(chartJson.market_caps ?? [], marketCapUsd);
+      marketCapChart24h = downsampleMarketCapChart(scaled);
+    } catch (error) {
+      this.logger.warn(
+        `Market cap chart skipped: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
+
     const metrics: MarketMetricsDto = {
       totalMarketCap: formatMarketCapUsd(marketCapUsd),
       totalMarketCapChange24h: marketCapChange,
@@ -155,6 +176,7 @@ export class MarketMetricsService implements OnModuleDestroy {
       altcoinSeasonLabel: altcoinSeasonLabel(altcoinSeasonIndex),
       fearGreedValue: Math.max(0, Math.min(100, Math.round(fearGreedValue))),
       fearGreedLabel,
+      marketCapChart24h,
     };
 
     await this.redis.set(`${CACHE_KEY}:stale`, JSON.stringify(metrics), 'EX', 86400);

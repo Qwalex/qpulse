@@ -127,9 +127,18 @@ interface ResultsResponse {
 }
 ```
 
+### MarketCapChartPoint
+
+```typescript
+interface MarketCapChartPoint {
+  timestamp: number; // ms unix
+  valueUsd: number;
+}
+```
+
 ### MarketMetricsDto
 
-Live dashboard metrics (total cap, altcoin season, fear & greed). Served by `GET /market-metrics` — aggregated from public providers with Redis cache; admin `HomeContent` is fallback only.
+Live dashboard metrics (total cap, 24h cap chart, altcoin season, fear & greed). Served by `GET /market-metrics` — aggregated from public providers with Redis cache; admin `HomeContent` is fallback only.
 
 ### HomeContentDto
 

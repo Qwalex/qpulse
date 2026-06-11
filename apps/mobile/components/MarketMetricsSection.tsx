@@ -3,6 +3,7 @@ import { Ionicons } from '@expo/vector-icons';
 import type { MarketMetricsDto } from '@qpulse/shared';
 import { radii, spacing } from '@/constants/theme';
 import { useAppStore } from '@/store/useAppStore';
+import { MarketCapChart } from '@/components/MarketCapChart';
 
 interface MarketMetricsSectionProps {
   metrics: MarketMetricsDto;
@@ -107,6 +108,13 @@ export function MarketMetricsSection({ metrics }: MarketMetricsSectionProps) {
             {change.toFixed(2)}% (24h)
           </Text>
         </View>
+        {(metrics.marketCapChart24h?.length ?? 0) >= 2 && (
+          <MarketCapChart
+            points={metrics.marketCapChart24h!}
+            lineColor={changeColor}
+            fillColor={changeColor}
+          />
+        )}
       </View>
 
       <View style={styles.gaugeRow}>

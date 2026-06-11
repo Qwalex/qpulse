@@ -1,4 +1,33 @@
-import type { MarketMetricsDto } from '@qpulse/shared';
+import type { MarketCapChartPoint, MarketMetricsDto } from '@qpulse/shared';
+
+const CHART_MAX_POINTS = 48;
+
+export function downsampleMarketCapChart(
+  points: MarketCapChartPoint[],
+  maxPoints = CHART_MAX_POINTS,
+): MarketCapChartPoint[] {
+  if (points.length <= maxPoints) return points;
+  const result: MarketCapChartPoint[] = [];
+  for (let i = 0; i < maxPoints; i++) {
+    const idx = Math.round((i / (maxPoints - 1)) * (points.length - 1));
+    result.push(points[idx]);
+  }
+  return result;
+}
+
+export function scaleBtcMarketCapChart(
+  btcMarketCaps: Array<[number, number]>,
+  totalMarketCapUsd: number,
+): MarketCapChartPoint[] {
+  if (btcMarketCaps.length === 0) return [];
+  const latestBtc = btcMarketCaps[btcMarketCaps.length - 1][1];
+  if (!Number.isFinite(latestBtc) || latestBtc <= 0) return [];
+  const scale = totalMarketCapUsd / latestBtc;
+  return btcMarketCaps.map(([timestamp, valueUsd]) => ({
+    timestamp,
+    valueUsd: valueUsd * scale,
+  }));
+}
 
 export function formatMarketCapUsd(usd: number): string {
   const abs = Math.abs(usd);
